@@ -30,8 +30,13 @@ public class BankAccountService:IBankAccountService
 
     public async Task<BankAccountResponse> GetById(Guid id)
     {
-     var result=   await _bankAccountRepository.GetById(id); 
-     return   _mapper.Map<BankAccountResponse>(result);
+        var bankAccount=   await _bankAccountRepository.GetById(id); 
+     
+        var bankGateway = await _bankGatewayRepository.GetById(bankAccount.BankGatewayId);
+     
+        var result = _mapper.Map<BankAccountResponse>(bankAccount);
+        result.BankGateway = _mapper.Map<BankGatewayResponse>(bankGateway);
+        return result;
     }
 
     public IQueryable<BankAccountResponse> GetAll(Guid userId)
