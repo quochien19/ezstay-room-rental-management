@@ -32,7 +32,7 @@ namespace PaymentAPI.Controllers
         // }
         [HttpPut("gateway/{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> HideBankGateway(Guid id,[FromQuery]  bool isActive)
+        public async Task<IActionResult> HideBankGateway(Guid id,[FromQuery] bool isActive)
         {
             return Ok(await _bankGatewayService.HiddenBankGateway(id, isActive));
         }
@@ -47,8 +47,6 @@ namespace PaymentAPI.Controllers
         {
             return  _bankGatewayService.GetAllBankGateway();
         }
-        
-        
         [HttpPost("bank-account")]
         [Authorize(Roles = "Admin, Owner")]
         public async Task<IActionResult> Add([FromBody] CreateBankAccount request)
@@ -57,7 +55,6 @@ namespace PaymentAPI.Controllers
             var result = await _bankAccountService.AddBankAccount(userId, request);
             if (!result.IsSuccess)
                 return BadRequest(result.Message);
-
             return Ok(result);
         }
         
@@ -82,10 +79,10 @@ namespace PaymentAPI.Controllers
       
       
         
-        [HttpGet("bank-account/all-by-user")]
+        [HttpGet("bank-account/by-user")]
         [EnableQuery]
         [Authorize(Roles = "Admin, Owner")]
-        public IQueryable<BankAccountResponse> GetAll()
+        public IQueryable<BankAccountResponse> GetAllByUser()
         {
             var userId = _tokenService.GetUserIdFromClaims(User);
           return   _bankAccountService.GetAll(userId);
@@ -121,7 +118,7 @@ namespace PaymentAPI.Controllers
         }
         [HttpGet("{ownerId}/getDefault")]
         [EnableQuery]
-        public IQueryable<BankAccountResponse> GetAllD(Guid ownerId)
+        public IQueryable<BankAccountResponse> GetAll(Guid ownerId)
         {
             return  _bankAccountService.GetDefaultByUserId(ownerId);
         }
