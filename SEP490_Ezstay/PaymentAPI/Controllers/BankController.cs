@@ -74,11 +74,6 @@ namespace PaymentAPI.Controllers
             var result = await _bankAccountService.DeleteBankAccount(id);
             return Ok(result);
         }
-        
-        
-      
-      
-        
         [HttpGet("bank-account/by-user")]
         [EnableQuery]
         [Authorize(Roles = "Admin, Owner")]
