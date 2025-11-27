@@ -64,7 +64,7 @@ namespace PaymentAPI.Controllers
         {
             var result = await _bankAccountService.UpdateBankAccount(id,request);
             if (!result.IsSuccess)
-                return BadRequest();
+                return BadRequest(result.Message);
             return NoContent();
         }
         [Authorize(Roles = "Admin, Owner")]
