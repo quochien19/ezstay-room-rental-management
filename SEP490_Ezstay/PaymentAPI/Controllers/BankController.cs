@@ -31,7 +31,7 @@ namespace PaymentAPI.Controllers
         //     return Ok(result);
         // }
         [HttpPut("gateway/{id}")]
-        // [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> HideBankGateway(Guid id,[FromQuery]  bool isActive)
         {
             return Ok(await _bankGatewayService.HiddenBankGateway(id, isActive));
