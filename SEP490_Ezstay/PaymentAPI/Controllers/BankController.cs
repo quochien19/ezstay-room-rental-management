@@ -47,6 +47,13 @@ namespace PaymentAPI.Controllers
         {
             return  _bankGatewayService.GetAllBankGateway();
         }
+        [HttpGet("gateway/active")]
+        [EnableQuery]
+        public IQueryable<BankGatewayResponse> GetAllBankGatewayActive()
+        {
+            return _bankGatewayService.GetAllActiveBankGateway();
+        }
+        
         [HttpPost("bank-account")]
         [Authorize(Roles = "Admin, Owner")]
         public async Task<IActionResult> Add([FromBody] CreateBankAccount request)
@@ -99,21 +106,16 @@ namespace PaymentAPI.Controllers
         
         // chauw vẽ sequence
         
-        [HttpGet("gateway/active")]
-        [EnableQuery]
-        public IQueryable<BankGatewayResponse> GetAllBankGatewayActive()
-        {
-            return _bankGatewayService.GetAllActiveBankGateway();
-        }
+  
         [HttpGet("bank-account/{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _bankAccountService.GetById(id);
             return Ok(result);
         }
-        [HttpGet("{ownerId}/getDefault")]
+        [HttpGet("{ownerId}/active")]
         [EnableQuery]
-        public IQueryable<BankAccountResponse> GetAll(Guid ownerId)
+        public IQueryable<BankAccountResponse> GetAllBankAccountActive(Guid ownerId)
         {
             return  _bankAccountService.GetDefaultByUserId(ownerId);
         }

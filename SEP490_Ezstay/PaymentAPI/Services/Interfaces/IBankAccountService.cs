@@ -10,7 +10,7 @@ public interface IBankAccountService
   Task<BankAccountResponse> GetById(Guid id);
   IQueryable<BankAccountResponse> GetAll(Guid userId);
   
-  //IQueryable<BankAccountResponse> GetBankAccountsWithAmount(Guid ownerId, Guid billId, decimal amount, string? description = null);
+  // IQueryable<BankAccountResponse> GetBankAccountsWithAmount(Guid ownerId, Guid billId, decimal amount, string? description);
   IQueryable<BankAccountResponse> GetBankAccountsWithAmount(Guid ownerId, decimal amount, string? description);
 
   IQueryable<BankAccountResponse> GetDefaultByUserId(Guid userId);
