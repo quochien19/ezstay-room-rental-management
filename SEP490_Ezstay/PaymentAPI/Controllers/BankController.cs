@@ -113,14 +113,14 @@ namespace PaymentAPI.Controllers
             var result = await _bankAccountService.GetById(id);
             return Ok(result);
         }
-        [HttpGet("{ownerId}/active")]
+        [HttpGet("bank-account/owner/{ownerId}/active")]
         [EnableQuery]
         public IQueryable<BankAccountResponse> GetAllBankAccountActive(Guid ownerId)
         {
             return  _bankAccountService.GetDefaultByUserId(ownerId);
         }
         
-        [HttpGet("bank-account/owner/{ownerId}/active")]
+        [HttpGet("bank-account/owner/{ownerId}")]
         [EnableQuery]
         [Authorize(Roles = "User, Owner, Admin")]
         public IQueryable<BankAccountResponse> GetByOwnerIdForBill(Guid ownerId, [FromQuery] decimal amount, [FromQuery] string? description)
