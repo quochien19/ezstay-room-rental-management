@@ -144,13 +144,23 @@ public class PaymentService : IPaymentService
             var paymentCode = GeneratePaymentCode(billId);
             var paymentContent = $"EZSTAY {paymentCode}";
 
-            // Generate QR URL using VietQR
-            var qrUrl = GenerateVietQRUrl(
-                bankGateway?.BankName ?? "MB",
-                bankAccount.AccountNumber,
-                bill.TotalAmount,
-                paymentContent
-            );
+            // Ưu tiên dùng QR từ BankAccount nếu có, nếu không thì generate từ VietQR
+            string qrUrl;
+            if (!string.IsNullOrEmpty(bankAccount.ImageQR))
+            {
+                // Dùng QR code do chủ trọ tạo sẵn
+                qrUrl = bankAccount.ImageQR;
+            }
+            else
+            {
+                // Generate QR URL using VietQR
+                qrUrl = GenerateVietQRUrl(
+                    bankGateway?.BankName ?? "MB",
+                    bankAccount.AccountNumber,
+                    bill.TotalAmount,
+                    paymentContent
+                );
+            }
 
             // Check if payment already exists, if not create one
             var existingPayment = await _paymentRepository.GetByBillIdAndStatusAsync(
