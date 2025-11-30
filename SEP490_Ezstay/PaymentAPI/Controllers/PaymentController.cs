@@ -366,7 +366,14 @@ public class SePayWebhookRequest
     public decimal TransferAmount { get; set; }
     public string? ReferenceCode { get; set; }
     public decimal Accumulated { get; set; }
-    public string Id { get; set; } = string.Empty; // Transaction ID
+    
+    // Transaction ID - SePay gửi dạng số (int/long)
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public long IdNumber { get; set; }
+    
+    // Convert to string for use
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string Id => IdNumber.ToString();
     
     // Legacy compatibility - map từ fields mới
     [System.Text.Json.Serialization.JsonIgnore]
