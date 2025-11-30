@@ -1,0 +1,6 @@
+@UtilityBillAPI_HostAddress = http://localhost:5232
+
+GET {{UtilityBillAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

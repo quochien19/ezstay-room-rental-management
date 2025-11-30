@@ -16,6 +16,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PaymentAPI", "PaymentAPI\Pa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{1FA5EF3B-1446-4675-9213-2029BA84676F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilityBillAPI", "UtilityBillAPI\UtilityBillAPI.csproj", "{A943A356-1A44-4474-8E1B-6867B5DC4720}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{1FA5EF3B-1446-4675-9213-2029BA84676F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FA5EF3B-1446-4675-9213-2029BA84676F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FA5EF3B-1446-4675-9213-2029BA84676F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A943A356-1A44-4474-8E1B-6867B5DC4720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A943A356-1A44-4474-8E1B-6867B5DC4720}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A943A356-1A44-4474-8E1B-6867B5DC4720}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A943A356-1A44-4474-8E1B-6867B5DC4720}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
