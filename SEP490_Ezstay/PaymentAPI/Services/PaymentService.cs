@@ -15,7 +15,7 @@ public class PaymentService : IPaymentService
     private readonly IPaymentHistoryRepository _historyRepository;
     private readonly IBankAccountRepository _bankAccountRepository;
     private readonly IBankGatewayRepository _bankGatewayRepository;
-    private readonly IUtilityBillService _utilityBillService;
+    private readonly IUtilityBillService? _utilityBillService;
     private readonly ILogger<PaymentService> _logger;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
@@ -25,10 +25,10 @@ public class PaymentService : IPaymentService
         IPaymentHistoryRepository historyRepository,
         IBankAccountRepository bankAccountRepository,
         IBankGatewayRepository bankGatewayRepository,
-        IUtilityBillService utilityBillService,
         ILogger<PaymentService> logger,
         IMapper mapper,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IUtilityBillService? utilityBillService = null)
     {
         _paymentRepository = paymentRepository;
         _historyRepository = historyRepository;
@@ -230,98 +230,131 @@ public class PaymentService : IPaymentService
                 return ApiResponse<object>.Success(new { message = "Transaction already processed" });
             }
 
-            // 2. Parse payment code from content (format: "EZSTAY XXXXXX")
-            var paymentCode = ExtractPaymentCode(content);
-            if (string.IsNullOrEmpty(paymentCode))
-            {
-                _logger.LogWarning($"⚠️ Cannot extract payment code from content: {content}");
-                
-                // Still save the transaction for reference
-                await SaveUnmatchedTransaction(accountNumber, amount, content, transactionId);
-                
-                return ApiResponse<object>.Success(new { message = "Payment code not found in content" });
-            }
-
-            _logger.LogInformation($"📝 Extracted payment code: {paymentCode}");
-
-            // 3. Find payment by code
-            var payment = await _paymentRepository.GetByPaymentCodeAsync(paymentCode);
-            if (payment == null)
-            {
-                _logger.LogWarning($"⚠️ Payment not found for code: {paymentCode}");
-                await SaveUnmatchedTransaction(accountNumber, amount, content, transactionId);
-                return ApiResponse<object>.Fail($"Không tìm thấy payment với code: {paymentCode}");
-            }
-
-            // 4. Validate amount
-            if (payment.Amount != amount)
-            {
-                _logger.LogWarning($"⚠️ Amount mismatch. Expected: {payment.Amount}, Got: {amount}");
-                // Still process but log warning
-            }
-
-            // 5. Update payment status
-            var previousStatus = payment.Status;
-            payment.Status = PaymentStatus.Success;
-            payment.TransactionId = transactionId;
-            payment.TransactionContent = content;
-            payment.PaidAt = DateTime.UtcNow;
-            payment.Gateway = "SePay";
-
-            await _paymentRepository.UpdateAsync(payment);
-
-            _logger.LogInformation($"✅ Payment {payment.Id} updated to Success");
-
-            // 6. Create payment history
+            // 2. LUÔN LƯU LỊCH SỬ GIAO DỊCH TRƯỚC
             var history = new PaymentHistory
             {
-                PaymentId = payment.Id,
-                UtilityBillId = payment.UtilityBillId,
+                PaymentId = Guid.Empty,
+                UtilityBillId = Guid.Empty,
                 SePayTransactionId = transactionId,
                 Amount = amount,
                 TransactionContent = content,
                 AccountNumber = accountNumber,
                 Gateway = "SePay",
                 TransferType = "in",
-                PreviousStatus = previousStatus,
-                NewStatus = PaymentStatus.Success,
-                StatusChangeReason = "Webhook xác nhận thanh toán thành công",
+                PreviousStatus = PaymentStatus.Pending,
+                NewStatus = PaymentStatus.Pending,
+                StatusChangeReason = "Nhận webhook từ SePay",
                 TransactionDate = DateTime.UtcNow,
                 RawWebhookData = JsonSerializer.Serialize(new { accountNumber, amount, content, transactionId })
             };
 
-            await _historyRepository.CreateAsync(history);
-
-            _logger.LogInformation($"📝 Payment history created: {history.Id}");
-
-            // 7. Update bill status
-            var billUpdated = await _utilityBillService.UpdateBillStatusAsync(
-                payment.UtilityBillId, 
-                "Paid", 
-                DateTime.UtcNow);
-
-            if (billUpdated)
+            // 3. Parse payment code from content (format: "EZSTAY XXXXXX")
+            var paymentCode = ExtractPaymentCode(content);
+            
+            if (!string.IsNullOrEmpty(paymentCode))
             {
-                _logger.LogInformation($"✅ Bill {payment.UtilityBillId} marked as paid");
+                _logger.LogInformation($"📝 Extracted payment code: {paymentCode}");
+
+                // 4. Find payment by code
+                var payment = await _paymentRepository.GetByPaymentCodeAsync(paymentCode);
+                if (payment != null)
+                {
+                    // 5. Update payment status
+                    var previousStatus = payment.Status;
+                    payment.Status = PaymentStatus.Success;
+                    payment.TransactionId = transactionId;
+                    payment.TransactionContent = content;
+                    payment.PaidAt = DateTime.UtcNow;
+                    payment.Gateway = "SePay";
+
+                    await _paymentRepository.UpdateAsync(payment);
+
+                    _logger.LogInformation($"✅ Payment {payment.Id} updated to Success");
+
+                    // Update history with payment info
+                    history.PaymentId = payment.Id;
+                    history.UtilityBillId = payment.UtilityBillId;
+                    history.PreviousStatus = previousStatus;
+                    history.NewStatus = PaymentStatus.Success;
+                    history.StatusChangeReason = "Webhook xác nhận thanh toán thành công";
+
+                    // 6. Try to update bill status (optional - không crash nếu fail)
+                    try
+                    {
+                        if (_utilityBillService != null)
+                        {
+                            var billUpdated = await _utilityBillService.UpdateBillStatusAsync(
+                                payment.UtilityBillId, 
+                                "Paid", 
+                                DateTime.UtcNow);
+
+                            if (billUpdated)
+                            {
+                                _logger.LogInformation($"✅ Bill {payment.UtilityBillId} marked as paid");
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"⚠️ Failed to update bill {payment.UtilityBillId} status");
+                            }
+                        }
+                    }
+                    catch (Exception billEx)
+                    {
+                        _logger.LogWarning($"⚠️ Could not update bill: {billEx.Message}");
+                        // Không throw - vẫn tiếp tục lưu history
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ Payment not found for code: {paymentCode}");
+                    history.StatusChangeReason = $"Không tìm thấy payment với code: {paymentCode}";
+                }
             }
             else
             {
-                _logger.LogWarning($"⚠️ Failed to update bill {payment.UtilityBillId} status");
+                _logger.LogWarning($"⚠️ Cannot extract payment code from content: {content}");
+                history.StatusChangeReason = "Không tìm thấy EZSTAY code trong nội dung";
             }
+
+            // 7. LUÔN LƯU HISTORY
+            await _historyRepository.CreateAsync(history);
+            _logger.LogInformation($"📝 Payment history saved: {history.Id}");
 
             return ApiResponse<object>.Success(new
             {
                 success = true,
-                paymentId = payment.Id,
-                billId = payment.UtilityBillId,
+                historyId = history.Id,
+                paymentId = history.PaymentId != Guid.Empty ? history.PaymentId : (Guid?)null,
                 transactionId = transactionId,
                 amount = amount,
-                message = "Thanh toán thành công"
+                message = history.StatusChangeReason
             });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing SePay webhook");
+            
+            // Cố gắng lưu lịch sử ngay cả khi có lỗi
+            try
+            {
+                var errorHistory = new PaymentHistory
+                {
+                    SePayTransactionId = transactionId,
+                    Amount = amount,
+                    TransactionContent = content,
+                    AccountNumber = accountNumber,
+                    Gateway = "SePay",
+                    TransferType = "in",
+                    PreviousStatus = PaymentStatus.Pending,
+                    NewStatus = PaymentStatus.Failed,
+                    StatusChangeReason = $"Lỗi xử lý: {ex.Message}",
+                    TransactionDate = DateTime.UtcNow,
+                    RawWebhookData = JsonSerializer.Serialize(new { accountNumber, amount, content, transactionId, error = ex.Message })
+                };
+                await _historyRepository.CreateAsync(errorHistory);
+            }
+            catch { }
+            
             return ApiResponse<object>.Fail($"Lỗi xử lý webhook: {ex.Message}");
         }
     }
@@ -356,36 +389,6 @@ public class PaymentService : IPaymentService
         }
 
         return null;
-    }
-
-    private async Task SaveUnmatchedTransaction(string accountNumber, decimal amount, string content, string transactionId)
-    {
-        try
-        {
-            var history = new PaymentHistory
-            {
-                PaymentId = Guid.Empty,
-                UtilityBillId = Guid.Empty,
-                SePayTransactionId = transactionId,
-                Amount = amount,
-                TransactionContent = content,
-                AccountNumber = accountNumber,
-                Gateway = "SePay",
-                TransferType = "in",
-                PreviousStatus = PaymentStatus.Pending,
-                NewStatus = PaymentStatus.Pending,
-                StatusChangeReason = "Giao dịch không khớp với payment nào",
-                TransactionDate = DateTime.UtcNow,
-                RawWebhookData = JsonSerializer.Serialize(new { accountNumber, amount, content, transactionId })
-            };
-
-            await _historyRepository.CreateAsync(history);
-            _logger.LogInformation($"📝 Saved unmatched transaction: {transactionId}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving unmatched transaction");
-        }
     }
 
     #endregion

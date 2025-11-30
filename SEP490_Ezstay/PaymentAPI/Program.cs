@@ -41,19 +41,26 @@ builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>(
 builder.Services.AddHttpClient<ISePayService, SePayService>();
 builder.Services.AddScoped<ISePayService, SePayService>();
 
-// Utility Bill Service (HTTP Client to UtilityBillAPI)
-builder.Services.AddHttpClient<IUtilityBillService, UtilityBillService>((serviceProvider, client) =>
+// Utility Bill Service (HTTP Client to UtilityBillAPI) - OPTIONAL
+var utilityBillApiUrl = builder.Configuration["ServiceUrls:UtilityBillAPI"];
+if (!string.IsNullOrEmpty(utilityBillApiUrl) && Uri.TryCreate(utilityBillApiUrl, UriKind.Absolute, out _))
 {
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    var utilityBillApiUrl = configuration["ServiceUrls:UtilityBillAPI"];
-})
-.ConfigurePrimaryHttpMessageHandler(() =>
+    builder.Services.AddHttpClient<IUtilityBillService, UtilityBillService>((serviceProvider, client) =>
+    {
+        client.BaseAddress = new Uri(utilityBillApiUrl);
+    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler();
+        handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+        return handler;
+    });
+}
+else
 {
-    // For development: ignore SSL certificate errors for localhost
-    var handler = new HttpClientHandler();
-    handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-    return handler;
-});
+    // Register null service when UtilityBillAPI is not configured
+    builder.Services.AddScoped<IUtilityBillService>(sp => null!);
+}
 
 
 

@@ -18,12 +18,7 @@ public class UtilityBillService : IUtilityBillService
         _httpClient = httpClient;
         _logger = logger;
         _configuration = configuration;
-        
-        var utilityBillApiUrl = _configuration["ServiceUrls:UtilityBillAPI"];
-        if (!string.IsNullOrEmpty(utilityBillApiUrl))
-        {
-            _httpClient.BaseAddress = new Uri(utilityBillApiUrl);
-        }
+        // BaseAddress is set in Program.cs via HttpClient factory
     }
 
     public async Task<UtilityBillResponse?> GetBillByIdAsync(Guid billId)
