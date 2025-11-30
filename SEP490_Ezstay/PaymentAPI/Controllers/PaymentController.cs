@@ -97,43 +97,7 @@ public class PaymentController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Upload receipt image cho offline payment
-    /// </summary>
-    [HttpPost("{paymentId}/upload-receipt")]
-    [Authorize]
-    public async Task<IActionResult> UploadReceipt(Guid paymentId, IFormFile file)
-    {
-        if (file == null || file.Length == 0)
-        {
-            return BadRequest(new { isSuccess = false, message = "File không hợp lệ" });
-        }
 
-        // Validate file type
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        
-        if (!allowedExtensions.Contains(extension))
-        {
-            return BadRequest(new { isSuccess = false, message = "Chỉ chấp nhận file ảnh (jpg, png) hoặc pdf" });
-        }
-
-        // Validate file size (max 5MB)
-        if (file.Length > 5 * 1024 * 1024)
-        {
-            return BadRequest(new { isSuccess = false, message = "File không được vượt quá 5MB" });
-        }
-
-        using var stream = file.OpenReadStream();
-        var result = await _paymentService.UploadReceiptImageAsync(paymentId, stream, file.FileName);
-        
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-
-        return Ok(result);
-    }
 
     /// <summary>
     /// Lấy chi tiết 1 payment
@@ -204,27 +168,7 @@ public class PaymentController : ControllerBase
         
         return Ok(result);
     }
-
-    /// <summary>
-    /// Chủ trọ từ chối offline payment
-    /// </summary>
-    [HttpPost("{paymentId}/reject")]
-    [Authorize(Roles = "Owner,Admin")]
-    public async Task<IActionResult> RejectOfflinePayment(
-        Guid paymentId, 
-        [FromBody] RejectPaymentRequest request)
-    {
-        var ownerId = GetCurrentUserId();
-        var result = await _paymentService.RejectOfflinePaymentAsync(paymentId, request, ownerId);
-        
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        
-        return Ok(result);
-    }
-
+    
     /// <summary>
     /// Lấy danh sách offline payment chờ duyệt (cho owner)
     /// </summary>
@@ -288,25 +232,6 @@ public class PaymentController : ControllerBase
         try
         {
             // TODO: Uncomment khi SePay config webhook secret
-            // // 1. Validate signature
-            // var signature = Request.Headers["X-SePay-Signature"].ToString();
-            // var payload = await new StreamReader(Request.Body).ReadToEndAsync();
-            // 
-            // var validator = new WebhookSignatureValidator(_logger, Configuration);
-            // if (!validator.ValidateSignature(payload, signature))
-            // {
-            //     _logger.LogWarning("Invalid webhook signature");
-            //     return Unauthorized(new { error = "Invalid signature" });
-            // }
-            //
-            // // 2. Validate timestamp (prevent replay attack)
-            // var timestamp = Request.Headers["X-SePay-Timestamp"].ToString();
-            // if (!validator.ValidateTimestamp(timestamp))
-            // {
-            //     _logger.LogWarning("Invalid webhook timestamp");
-            //     return BadRequest(new { error = "Invalid timestamp" });
-            // }
-            
             _logger.LogInformation($"🔔 Received SePay webhook: {System.Text.Json.JsonSerializer.Serialize(request)}");
             _logger.LogInformation($"📝 Content: {request.Content}");
             _logger.LogInformation($"💰 Amount: {request.TransferAmount}");
@@ -360,7 +285,7 @@ public class PaymentController : ControllerBase
     /// Chỉ check database, không gọi SePay API
     /// </summary>
     [HttpGet("check-payment/{billId}")]
-    [Authorize]
+    [AllowAnonymous] // Allow polling without auth
     public async Task<IActionResult> CheckBillPaymentStatus(Guid billId)
     {
         try
@@ -373,11 +298,18 @@ public class PaymentController : ControllerBase
                 return Ok(new { isPaid = false, message = result.Message });
             }
             
+            // Check if IsPaid is true or Status is "Success"
+            var isPaid = result.Data?.IsPaid == true || result.Data?.Status == "Success";
+            
             return Ok(new 
             { 
-                isPaid = result.Data?.Status == "Paid",
+                isPaid = isPaid,
                 status = result.Data?.Status,
-                message = result.Message 
+                paymentId = result.Data?.PaymentId,
+                transactionId = result.Data?.TransactionId,
+                paidAmount = result.Data?.PaidAmount,
+                paidDate = result.Data?.PaidDate,
+                message = result.Data?.Message ?? result.Message 
             });
         }
         catch (Exception ex)
@@ -387,6 +319,11 @@ public class PaymentController : ControllerBase
         }
     }
 
+    // ========================================
+    // FLOW 2: MANUAL CHECK - COMMENTED OUT
+    // Uncomment khi cần backup cho webhook
+    // ========================================
+    /*
     /// <summary>
     /// Manual check payment - User nhấn "Đã chuyển khoản, kiểm tra ngay"
     /// API này sẽ chủ động gọi SePay để tìm giao dịch
@@ -397,26 +334,19 @@ public class PaymentController : ControllerBase
     {
         _logger.LogInformation($"🔍 Manual payment check requested for bill: {billId}");
         
-        // Try to get tenant ID from auth, but allow anonymous for testing
-        Guid tenantId = Guid.Empty;
+        // Get userId if authenticated, otherwise use empty Guid
+        Guid userId = Guid.Empty;
         try
         {
-            if (User.Identity?.IsAuthenticated == true)
-            {
-                tenantId = GetCurrentUserId();
-                _logger.LogInformation($"👤 Authenticated Tenant ID: {tenantId}");
-            }
-            else
-            {
-                _logger.LogInformation($"⚠️ Anonymous request - will use empty tenant ID");
-            }
+            userId = GetCurrentUserId();
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogWarning($"⚠️ Cannot get user ID: {ex.Message}");
+            // User not authenticated, use empty Guid
+            _logger.LogInformation($"ℹ️ Anonymous manual check for bill: {billId}");
         }
         
-        var result = await _paymentService.CheckPaymentManualAsync(billId, tenantId);
+        var result = await _paymentService.CheckPaymentManualAsync(billId, userId);
         
         if (!result.IsSuccess)
         {
@@ -425,6 +355,7 @@ public class PaymentController : ControllerBase
         
         return Ok(result);
     }
+    */
 
     // Helper method
     private Guid GetCurrentUserId()

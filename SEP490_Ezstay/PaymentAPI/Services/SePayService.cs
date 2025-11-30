@@ -21,8 +21,11 @@ public class SePayService : ISePayService
         _config = config.Value;
         _logger = logger;
         
-        _httpClient.BaseAddress = new Uri(_config.ApiUrl);
+        // SePay API base URL
+        _httpClient.BaseAddress = new Uri("https://my.sepay.vn");
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_config.SecretKey}");
+        
+        _logger.LogInformation($"🔧 SePayService initialized with API URL: https://my.sepay.vn");
     }
 
     public async Task<SePayTransactionResponse> GetTransactionDetailsAsync(string transactionId)

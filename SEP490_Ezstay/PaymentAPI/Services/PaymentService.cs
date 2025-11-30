@@ -1060,15 +1060,7 @@ public class PaymentService : IPaymentService
                     "Chưa tìm thấy giao dịch chuyển khoản. Vui lòng đợi vài phút hoặc kiểm tra lại nội dung chuyển khoản có đúng không."
                 );
             }
-
-            // Verify amount
-            if (transaction.AmountInDecimal != bill.TotalAmount)
-            {
-                _logger.LogWarning($"Amount mismatch: Expected {bill.TotalAmount}, Got {transaction.AmountInDecimal}");
-                return ApiResponse<PaymentResponse>.Fail(
-                    $"Số tiền không khớp. Cần: {bill.TotalAmount:N0}đ, Đã chuyển: {transaction.AmountInDecimal:N0}đ"
-                );
-            }
+            
 
             // Tạo payment từ transaction tìm được
             var payment = new Payment
