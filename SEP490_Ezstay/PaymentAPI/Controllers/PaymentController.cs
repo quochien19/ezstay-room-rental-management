@@ -59,27 +59,7 @@ public class PaymentController : ControllerBase
         
         return Ok(result);
     }
-
-    /// <summary>
-    /// ⭐ NEW: Tạo payment cho thanh toán Offline
-    /// ặtDùng khi user muốn thanh toán bằng tiền m
-    /// </summary>
-    [HttpPost("create-offline/{billId}")]
-    [Authorize]
-    public async Task<IActionResult> CreateOfflinePayment(Guid billId, [FromBody] CreateOfflinePaymentRequest? request)
-    {
-        var tenantId = GetCurrentUserId();
-        var notes = request?.Notes;
-        var result = await _paymentService.CreateOfflinePaymentAsync(billId, tenantId, notes);
-        
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        
-        return Ok(result);
-    }
-
+    
     /// <summary>
     /// Verify online payment (check với SePay)
     /// </summary>
@@ -150,43 +130,7 @@ public class PaymentController : ControllerBase
         
         return Ok(result);
     }
-
-    /// <summary>
-    /// Chủ trọ duyệt offline payment
-    /// </summary>
-    [HttpPost("{paymentId}/approve")]
-    [Authorize(Roles = "Owner,Admin")]
-    public async Task<IActionResult> ApproveOfflinePayment(Guid paymentId, [FromBody] ApprovePaymentRequest request)
-    {
-        var ownerId = GetCurrentUserId();
-        var result = await _paymentService.ApproveOfflinePaymentAsync(paymentId, request, ownerId);
-        
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        
-        return Ok(result);
-    }
     
-    /// <summary>
-    /// Lấy danh sách offline payment chờ duyệt (cho owner)
-    /// </summary>
-    [HttpGet("pending-approvals")]
-    [Authorize(Roles = "Owner,Admin")]
-    public async Task<IActionResult> GetPendingApprovals()
-    {
-        var ownerId = GetCurrentUserId();
-        var result = await _paymentService.GetPendingApprovalsAsync(ownerId);
-        
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        
-        return Ok(result);
-    }
-
     /// <summary>
     /// Lấy payment mới nhất của 1 bill (dùng cho trang BillDetail)
     /// </summary>
@@ -225,7 +169,7 @@ public class PaymentController : ControllerBase
     /// Webhook endpoint để nhận thông báo từ SePay khi có giao dịch mới
     /// URL: /api/Payment/webhook/sepay
     /// </summary>
-    [HttpPost("webhook/sepay")]
+    [HttpPost("hook/sepay")]
     [AllowAnonymous] // Webhook không cần auth
     public async Task<IActionResult> SePayWebhook([FromBody] SePayWebhookRequest request)
     {
