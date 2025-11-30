@@ -17,6 +17,11 @@ public class BankGatewayRepository : IBankGatewayRepository
         return await _bankGateways.Find(a => a.Id == id).FirstOrDefaultAsync();
     }
 
+    public async Task<BankGateway?> GetByIdAsync(Guid id)
+    {
+        return await _bankGateways.Find(a => a.Id == id).FirstOrDefaultAsync();
+    }
+
     public async Task AddMany(IEnumerable<BankGateway> gateways)
     {
         await _bankGateways.InsertManyAsync(gateways);

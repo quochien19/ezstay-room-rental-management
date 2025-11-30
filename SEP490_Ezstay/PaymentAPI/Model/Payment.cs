@@ -9,52 +9,44 @@ public class Payment
     [BsonId]
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid Id { get; set; } = Guid.NewGuid();
-
+    
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid UtilityBillId { get; set; }
-
+    
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
-    public Guid TenantId { get; set; } 
-
+    public Guid TenantId { get; set; }
+    
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
-    public Guid OwnerId { get; set; }
-
-    [BsonGuidRepresentation(GuidRepresentation.Standard)]
-    public Guid BankAccountId { get; set; } 
-    public string? BankAccountNumber { get; set; } // Số tài khoản lấy từ BankAccount.AccountNumber của CHỦ TRỌ (cho online payment)
-
+    public Guid? OwnerId { get; set; }
+    
     public decimal Amount { get; set; }
     
-    public PaymentMethod PaymentMethod { get; set; } 
-    public PaymentStatus Status { get; set; }
-
-    public string? TransactionId { get; set; } // Mã giao dịch từ SePay (TransactionNumber)
-    public string? TransactionContent { get; set; } // Nội dung chuyển khoản (Description từ SePay)
-
-    public string? ReceiptImageUrl { get; set; } // Ảnh biên lai / ảnh xác nhận (cho offline payment)
-    public string? SePayResponse { get; set; } // Lưu toàn bộ JSON response từ SePay
+    [BsonRepresentation(BsonType.String)]
+    public PaymentMethod PaymentMethod { get; set; }
     
-    public string? BankBrandName { get; set; } // Tên ngân hàng từ SePay (để biết tenant chuyển từ bank nào)
-    public DateTime? TransactionDate { get; set; } // Thời gian giao dịch thực tế từ SePay
+    [BsonRepresentation(BsonType.String)]
+    public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     
-    public DateTime CreatedDate { get; set; } 
+    // SePay transaction info
+    public string? TransactionId { get; set; }
+    public string? TransactionContent { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? Gateway { get; set; }
     
-    public DateTime? UpdatedDate { get; set; }
-
-    public DateTime? CompletedDate { get; set; } 
-    public string? Notes { get; set; } 
-
-    [BsonGuidRepresentation(GuidRepresentation.Standard)]
-    public Guid? ApprovedBy { get; set; } // Owner ID người duyệt
+    // QR code info for online payment
+    public string? QrDataUrl { get; set; }
+    public string? PaymentCode { get; set; } // Code nhúng trong nội dung chuyển khoản để định danh
     
-    [BsonRepresentation(BsonType.DateTime)]
+    // Notes
+    public string? Notes { get; set; }
+    public string? ApprovalNotes { get; set; }
+    
+    // Timestamps
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public DateTime? PaidAt { get; set; }
     public DateTime? ApprovedAt { get; set; }
     
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
-    public Guid? RejectedBy { get; set; } // Owner ID người từ chối
-    
-    [BsonRepresentation(BsonType.DateTime)]
-    public DateTime? RejectedAt { get; set; }
-    
-    public string? RejectionReason { get; set; } // Lý do từ chối
+    public Guid? ApprovedBy { get; set; }
 }

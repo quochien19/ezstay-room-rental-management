@@ -8,8 +8,8 @@ using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using PaymentAPI.Config;
 using PaymentAPI.Mapping;
-using PaymentAPI.Repository;
 using PaymentAPI.Repository.Interface;
+using PaymentAPI.Repository;
 using PaymentAPI.Services;
 using PaymentAPI.Services.Interfaces;
 using Shared.DTOs.Payments.Responses;
@@ -35,6 +35,8 @@ builder.Services.AddHttpClient<IBankGatewayService, BankGatewayService>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddHttpClient<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
 
 builder.Services.AddHttpClient<ISePayService, SePayService>();
 builder.Services.AddScoped<ISePayService, SePayService>();
@@ -137,12 +139,27 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 
-// Add CORS for frontend (Next.js)
+// Add CORS for frontend (Next.js) - Allow all origins for payment API
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+        policy.SetIsOriginAllowed(origin => true) // Allow all origins for API
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+    
+    // Alternative: Specific origins policy
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "https://ezstay-fe-project.vercel.app",
+                "https://ezstay-fe.vercel.app",
+                "https://payment-api-r4zy.onrender.com"
+              )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

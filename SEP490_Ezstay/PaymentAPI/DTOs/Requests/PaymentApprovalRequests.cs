@@ -2,6 +2,7 @@ namespace PaymentAPI.DTOs.Requests;
 
 public class ApprovePaymentRequest
 {
+    public bool IsApproved { get; set; } = true;
     public string? Notes { get; set; }
 }
 

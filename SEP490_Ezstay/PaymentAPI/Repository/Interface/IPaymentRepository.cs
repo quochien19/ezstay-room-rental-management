@@ -1,17 +1,27 @@
 using PaymentAPI.Model;
+using Shared.Enums;
 
 namespace PaymentAPI.Repository.Interface;
 
 public interface IPaymentRepository
 {
-    IQueryable<Payment> GetByOwner(Guid ownerId);
-    IQueryable<Payment> GetByUserId(Guid userId);
-    Task<Payment?> GetById(Guid id);
-    Task Add(Payment payment);
-    Task Update(Payment payment);
-    Task Delete(Guid id);
-    IQueryable<Payment> GetByBillId(Guid billId);
-    Task<Payment?> GetByTransactionId(string transactionId);
-    Task<List<Payment>> GetPendingOfflinePaymentsByOwner(Guid ownerId);
-  
+ 
+ Task<Payment?> GetByIdAsync(Guid id);
+
+   Task<Payment?> GetByBillIdAndStatusAsync(Guid billId, params PaymentStatus[] statuses);
+
+    Task<Payment?> GetByPaymentCodeAsync(string paymentCode);
+
+     Task<List<Payment>> GetByBillIdAsync(Guid billId);
+
+     Task<List<Payment>> GetByUserIdAsync(Guid userId);
+     Task<List<Payment>> GetPendingApprovalsByOwnerIdAsync(Guid ownerId);
+
+    Task<Payment?> GetLatestByBillIdAsync(Guid billId);
+
+   Task<Payment> CreateAsync(Payment payment);
+
+    Task<Payment> UpdateAsync(Payment payment);
+
+    Task<bool> ExistsAsync(Guid id);
 }

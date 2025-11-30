@@ -319,6 +319,40 @@ public class PaymentController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Lấy lịch sử thanh toán của một payment
+    /// </summary>
+    [HttpGet("{paymentId}/history")]
+    [Authorize]
+    public async Task<IActionResult> GetPaymentHistory(Guid paymentId)
+    {
+        var result = await _paymentService.GetPaymentHistoryAsync(paymentId);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy lịch sử thanh toán của một bill
+    /// </summary>
+    [HttpGet("bill/{billId}/history")]
+    [Authorize]
+    public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
+    {
+        var result = await _paymentService.GetBillPaymentHistoryAsync(billId);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        
+        return Ok(result);
+    }
+
     // ========================================
     // FLOW 2: MANUAL CHECK - COMMENTED OUT
     // Uncomment khi cần backup cho webhook
