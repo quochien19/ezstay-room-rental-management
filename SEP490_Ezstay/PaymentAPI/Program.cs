@@ -20,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 var mongoClient = new MongoClient(builder.Configuration["ConnectionStrings:ConnectionString"]);
 builder.Services.AddSingleton( mongoClient.GetDatabase(builder.Configuration["ConnectionStrings:DatabaseName"]));
 
-builder.Services.Configure<VnPayConfig>(builder.Configuration.GetSection("SePay"));
+// builder.Services.Configure<VnPayConfig>(builder.Configuration.GetSection("SePay"));
 builder.Services.Configure<SePayConfig>(builder.Configuration.GetSection("SePay"));
 
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -44,24 +44,28 @@ builder.Services.AddScoped<ISePayService, SePayService>();
 
 // Utility Bill Service (HTTP Client to UtilityBillAPI) - OPTIONAL
 var utilityBillApiUrl = builder.Configuration["ServiceUrls:UtilityBillAPI"];
-if (!string.IsNullOrEmpty(utilityBillApiUrl) && Uri.TryCreate(utilityBillApiUrl, UriKind.Absolute, out _))
+builder.Services.AddHttpClient<IUtilityBillService, UtilityBillService>(client =>
 {
-    builder.Services.AddHttpClient<IUtilityBillService, UtilityBillService>((serviceProvider, client) =>
-    {
-        client.BaseAddress = new Uri(utilityBillApiUrl);
-    })
-    .ConfigurePrimaryHttpMessageHandler(() =>
-    {
-        var handler = new HttpClientHandler();
-        handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-        return handler;
-    });
-}
-else
-{
-    // Register null service when UtilityBillAPI is not configured
-    builder.Services.AddScoped<IUtilityBillService>(sp => null!);
-}
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:BillAPI"]); 
+});
+// if (!string.IsNullOrEmpty(utilityBillApiUrl) && Uri.TryCreate(utilityBillApiUrl, UriKind.Absolute, out _))
+// {
+//     builder.Services.AddHttpClient<IUtilityBillService, UtilityBillService>((serviceProvider, client) =>
+//     {
+//         client.BaseAddress = new Uri(utilityBillApiUrl);
+//     })
+//     .ConfigurePrimaryHttpMessageHandler(() =>
+//     {
+//         var handler = new HttpClientHandler();
+//         handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+//         return handler;
+//     });
+// }
+// else
+// {
+//     // Register null service when UtilityBillAPI is not configured
+//     builder.Services.AddScoped<IUtilityBillService>(sp => null!);
+// }
 
 
 
