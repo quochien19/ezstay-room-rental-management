@@ -63,8 +63,22 @@ public class Payment
     [BsonId]
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid Id { get; set; } = Guid.NewGuid();
+    
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid BillId { get; set; }
+    
+    /// <summary>
+    /// ID người thuê (người thanh toán)
+    /// </summary>
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
+    public Guid TenantId { get; set; }
+    
+    /// <summary>
+    /// ID chủ trọ (người nhận tiền)
+    /// </summary>
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
+    public Guid OwnerId { get; set; }
+    
     public string TransactionId { get; set; }
     public decimal TransferAmount { get; set; }
     public string Content { get; set; }

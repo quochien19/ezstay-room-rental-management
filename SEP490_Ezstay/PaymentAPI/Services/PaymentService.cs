@@ -713,67 +713,138 @@ public class PaymentService : IPaymentService
     private readonly IPaymentRepository _paymentRepository;
     private readonly IUtilityBillService _utilityBillService;
     private readonly IMapper _mapper;
+    private readonly ILogger<PaymentService> _logger;
 
     public PaymentService(
         IPaymentRepository paymentRepository,
         IUtilityBillService utilityBillService,
-        IMapper mapper) {
+        IMapper mapper,
+        ILogger<PaymentService> logger) {
         _paymentRepository = paymentRepository;
         _utilityBillService = utilityBillService;
         _mapper = mapper;
+        _logger = logger;
     }
 
-    public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request){
-      //  var payment = _mapper.Map<Payment>(request);
-        // payment.BillId = ExtractBillIdFromContent(request.Content);
+    public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request)
+    {
+        var billId = ExtractBillIdFromContent(request.Content);
+        
+        // Lấy TenantId và OwnerId từ Bill
+        Guid tenantId = Guid.Empty;
+        Guid ownerId = Guid.Empty;
+        
+        if (billId != Guid.Empty)
+        {
+            var bill = await _utilityBillService.GetBillByIdAsync(billId);
+            if (bill != null)
+            {
+                tenantId = bill.TenantId;
+                ownerId = bill.OwnerId;
+                _logger.LogInformation($"📝 Got bill info: TenantId={tenantId}, OwnerId={ownerId}");
+            }
+            else
+            {
+                _logger.LogWarning($"⚠️ Bill not found for ID: {billId}");
+            }
+        }
+        
         var payment = new Payment
         {
-            BillId =  ExtractBillIdFromContent(request.Content),
+            BillId = billId,
+            TenantId = tenantId,
+            OwnerId = ownerId,
             TransactionId = request.TransactionId,
-            TransferAmount =  request.TransferAmount,
-            Content =  request.Content,
+            TransferAmount = request.TransferAmount,
+            Content = request.Content,
             AccountNumber = request.AccountNumber,
             Gateway = request.Gateway,
             TransferType = request.TransferType,
-           TransactionDate = DateTime.UtcNow,
-       };
+            TransactionDate = DateTime.UtcNow,
+        };
       
         await _paymentRepository.CreateAsync(payment);
-        // await _utilityBillService.MarkBillAsPaidInternalAsync(payment.BillId);
-        if (payment.BillId != Guid.Empty)
+        _logger.LogInformation($"✅ Payment saved: Id={payment.Id}, BillId={billId}, TenantId={tenantId}, OwnerId={ownerId}");
+        
+        if (billId != Guid.Empty)
         {
-            await _utilityBillService.MarkBillAsPaidInternalAsync(payment.BillId);
+            await _utilityBillService.MarkBillAsPaidInternalAsync(billId);
         }
         
-        return ApiResponse<bool>.Success(true,"Payment Successfully");
+        return ApiResponse<bool>.Success(true, "Payment Successfully");
     }
+    
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo TenantId (người thuê)
+    /// </summary>
+    public async Task<ApiResponse<List<Payment>>> GetPaymentsByTenantIdAsync(Guid tenantId)
+    {
+        try
+        {
+            var payments = await _paymentRepository.GetByTenantIdAsync(tenantId);
+            return ApiResponse<List<Payment>>.Success(payments, $"Found {payments.Count} payments");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting payments for tenant {tenantId}");
+            return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo OwnerId (chủ trọ)
+    /// </summary>
+    public async Task<ApiResponse<List<Payment>>> GetPaymentsByOwnerIdAsync(Guid ownerId)
+    {
+        try
+        {
+            var payments = await _paymentRepository.GetByOwnerIdAsync(ownerId);
+            return ApiResponse<List<Payment>>.Success(payments, $"Found {payments.Count} payments");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting payments for owner {ownerId}");
+            return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo BillId
+    /// </summary>
+    public async Task<ApiResponse<List<Payment>>> GetPaymentsByBillIdAsync(Guid billId)
+    {
+        try
+        {
+            var payments = await _paymentRepository.GetByBillIdAsync(billId);
+            return ApiResponse<List<Payment>>.Success(payments, $"Found {payments.Count} payments");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting payments for bill {billId}");
+            return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
+        }
+    }
+    
     private Guid ExtractBillIdFromContent(string content)
     {
         // 1. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
-        // Loại bỏ tất cả khoảng trắng, dấu gạch ngang (nếu có) và chuyển sang chữ hoa.
-        // Nếu nội dung chỉ là "6d91b42e 98cb 43b8 a361 4f48e1390f59"
-        // Nó sẽ trở thành "6D91B42E98CB43B8A3614F48E1390F59"
         var normalizedContent = content
             .Replace(" ", "") 
             .Replace("-", "") 
             .ToUpper();
 
         // 2. TÌM KIẾM CHUỖI GUID 32 KÝ TỰ (Định dạng N - Numeric)
-        // Ví dụ: tìm kiếm 6D91B42E98CB43B8A3614F48E1390F59
         var guidPattern = @"[0-9A-F]{32}"; 
     
-        // Chỉ cần tìm kiếm chuỗi 32 ký tự chữ/số (không cần tiền tố)
         var match = System.Text.RegularExpressions.Regex.Match(normalizedContent, guidPattern);
         if (match.Success)
         {
-            var rawGuidString = match.Groups[0].Value; // Lấy toàn bộ chuỗi khớp 32 ký tự
-            // 3. CHUYỂN ĐỔI: Dùng TryParseExact với định dạng "N"
+            var rawGuidString = match.Groups[0].Value;
             if (Guid.TryParseExact(rawGuidString, "N", out var billId))
             {
-                // Trả về Bill ID nếu tìm thấy và chuyển đổi thành công
                 return billId;
             }
         }
-         return Guid.Empty;
+        return Guid.Empty;
     }
 }

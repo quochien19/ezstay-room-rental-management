@@ -107,6 +107,7 @@
 
 
 using PaymentAPI.DTOs.Requests;
+using PaymentAPI.Model;
 using Shared.DTOs;
 using Shared.Enums;
 
@@ -115,4 +116,19 @@ namespace PaymentAPI.Services.Interfaces;
 public interface IPaymentService
 {
     Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request);
+    
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo TenantId (người thuê)
+    /// </summary>
+    Task<ApiResponse<List<Payment>>> GetPaymentsByTenantIdAsync(Guid tenantId);
+    
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo OwnerId (chủ trọ)
+    /// </summary>
+    Task<ApiResponse<List<Payment>>> GetPaymentsByOwnerIdAsync(Guid ownerId);
+    
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo BillId
+    /// </summary>
+    Task<ApiResponse<List<Payment>>> GetPaymentsByBillIdAsync(Guid billId);
 }

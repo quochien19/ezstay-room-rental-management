@@ -111,6 +111,16 @@ public class PaymentRepository : IPaymentRepository
     public PaymentRepository(IMongoDatabase database)
     {
         _payment = database.GetCollection<Payment>("Payments");
+        
+        // Create indexes for better query performance
+        var indexKeys = Builders<Payment>.IndexKeys;
+        _payment.Indexes.CreateMany(new[]
+        {
+            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.TenantId)),
+            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.OwnerId)),
+            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.BillId)),
+            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.TransactionId))
+        });
     }
 
     public async Task<Payment> GetByIdAsync(Guid id)
@@ -118,34 +128,41 @@ public class PaymentRepository : IPaymentRepository
         return await _payment.Find(h => h.Id == id).FirstOrDefaultAsync();
     }
 
-    // public async Task<List<Payment>> GetByPaymentIdAsync(Guid paymentId)
-    // {
-    //     return await _payment.Find(h => h.PaymentId == paymentId)
-    //         .SortByDescending(h => h.CreatedAt)
-    //         .ToListAsync();
-    // }
-
-    // public async Task<List<PaymentHistory>> GetByBillIdAsync(Guid billId)
-    // {
-    //     return await _histories.Find(h => h.UtilityBillId == billId)
-    //         .SortByDescending(h => h.CreatedAt)
-    //         .ToListAsync();
-    // }
-
     public async Task<Payment> GetBySePayTransactionIdAsync(string transactionId)
     {
         return await _payment.Find(h => h.TransactionId == transactionId)
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Payment> CreateAsync(Payment history)
+    public async Task<Payment> CreateAsync(Payment payment)
     {
-        await _payment.InsertOneAsync(history);
-        return history;
+        await _payment.InsertOneAsync(payment);
+        return payment;
     }
 
     public async Task<bool> ExistsByTransactionIdAsync(string transactionId)
     {
         return await _payment.Find(h => h.TransactionId == transactionId).AnyAsync();
+    }
+    
+    public async Task<List<Payment>> GetByTenantIdAsync(Guid tenantId)
+    {
+        return await _payment.Find(p => p.TenantId == tenantId)
+            .SortByDescending(p => p.TransactionDate)
+            .ToListAsync();
+    }
+    
+    public async Task<List<Payment>> GetByOwnerIdAsync(Guid ownerId)
+    {
+        return await _payment.Find(p => p.OwnerId == ownerId)
+            .SortByDescending(p => p.TransactionDate)
+            .ToListAsync();
+    }
+    
+    public async Task<List<Payment>> GetByBillIdAsync(Guid billId)
+    {
+        return await _payment.Find(p => p.BillId == billId)
+            .SortByDescending(p => p.TransactionDate)
+            .ToListAsync();
     }
 }
