@@ -8,14 +8,10 @@ public class CreatePayment
     
     public string Content { get; set; } 
     public decimal TransferAmount { get; set; }
-    
-    // Cần dùng: ID giao dịch (cần cho việc kiểm tra trùng lặp)
+    public string TransferType { get; set; }
     [System.Text.Json.Serialization.JsonPropertyName("id")]
-    public long IdNumber { get; set; }
-    
+    public long IdNumber { get; set; } 
+
     [System.Text.Json.Serialization.JsonIgnore]
-    public string Id => IdNumber.ToString();
-    
-    [System.Text.Json.Serialization.JsonIgnore]
-    public string TransactionId => Id;
+    public string TransactionId => IdNumber.ToString(); 
 }

@@ -46,7 +46,6 @@ public class SePayService : ISePayService
                     Message = $"Không thể lấy thông tin giao dịch: {response.StatusCode}"
                 };
             }
-
             var result = JsonSerializer.Deserialize<SePayTransactionResponse>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true

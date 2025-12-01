@@ -711,47 +711,65 @@ namespace PaymentAPI.Services;
 public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
-    // private readonly ISePayService _sePayService;
     private readonly IUtilityBillService _utilityBillService;
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
     private readonly IMapper _mapper;
 
     public PaymentService(
         IPaymentRepository paymentRepository,
-       // ISePayService sePayService,
         IUtilityBillService utilityBillService,
         HttpClient httpClient,
         IConfiguration configuration,
         IMapper mapper) {
         _paymentRepository = paymentRepository;
-       // _sePayService = sePayService;
         _utilityBillService = utilityBillService;
-        _httpClient = httpClient;
-        _configuration = configuration;
         _mapper = mapper;
     }
 
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request){
-        // // 1. Check duplicate transaction
-        // if (await _paymentRepository.ExistsByTransactionIdAsync(request.TransactionId))
+        var payment = _mapper.Map<Payment>(request);
+        payment.BillId = ExtractBillIdFromContent(request.Content);
+        // var history = new Payment
         // {
-        //     return ApiResponse<bool>.Success(true,  "Transaction already processed" );
-        // }
-        // 2. LUÔN LƯU LỊCH SỬ GIAO DỊCH TRƯỚC
-        var history = new Payment
+        //     BillId = Guid.Empty,
+        //     TransactionId = request.TransactionId,
+        //     TransferAmount =  request.TransferAmount,
+        //     Content =  request.Content,
+        //     AccountNumber = request.AccountNumber,
+        //     Gateway = request.Gateway,
+        //     TransferType = request.TransferType,
+       //     TransactionDate = DateTime.UtcNow,
+      //  };
+      
+        await _paymentRepository.CreateAsync(payment);
+        return ApiResponse<bool>.Success(true,"Payment Successfully");
+    }
+    private Guid ExtractBillIdFromContent(string content)
+    {
+        // 1. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
+        // Loại bỏ tất cả khoảng trắng, dấu gạch ngang (nếu có) và chuyển sang chữ hoa.
+        // Nếu nội dung chỉ là "6d91b42e 98cb 43b8 a361 4f48e1390f59"
+        // Nó sẽ trở thành "6D91B42E98CB43B8A3614F48E1390F59"
+        var normalizedContent = content
+            .Replace(" ", "") 
+            .Replace("-", "") 
+            .ToUpper();
+
+        // 2. TÌM KIẾM CHUỖI GUID 32 KÝ TỰ (Định dạng N - Numeric)
+        // Ví dụ: tìm kiếm 6D91B42E98CB43B8A3614F48E1390F59
+        var guidPattern = @"[0-9A-F]{32}"; 
+    
+        // Chỉ cần tìm kiếm chuỗi 32 ký tự chữ/số (không cần tiền tố)
+        var match = System.Text.RegularExpressions.Regex.Match(normalizedContent, guidPattern);
+        if (match.Success)
         {
-            BillId = Guid.Empty,
-            TransactionId = request.TransactionId,
-            TransferAmount =  request.TransferAmount,
-            Content =  request.Content,
-            AccountNumber = request.AccountNumber,
-            Gateway = "SePay",
-            TransferType = "in",
-            TransactionDate = DateTime.UtcNow,
-        };
-        
-        await _paymentRepository.CreateAsync(history);
-        return ApiResponse<bool>.Success(true,"Lưu lịch sử thành công");
+            var rawGuidString = match.Groups[0].Value; // Lấy toàn bộ chuỗi khớp 32 ký tự
+            // 3. CHUYỂN ĐỔI: Dùng TryParseExact với định dạng "N"
+            if (Guid.TryParseExact(rawGuidString, "N", out var billId))
+            {
+                // Trả về Bill ID nếu tìm thấy và chuyển đổi thành công
+                return billId;
+            }
+        }
+         return Guid.Empty;
     }
 }

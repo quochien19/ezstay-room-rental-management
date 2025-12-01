@@ -68,7 +68,6 @@ public class Payment
     public string TransactionId { get; set; }
     public decimal TransferAmount { get; set; }
     public string Content { get; set; }
-    public string Description { get; set; }
     public string AccountNumber { get; set; }
     public string Gateway { get; set; } // Tên ngân hàng
     public string TransferType { get; set; } // in/out
