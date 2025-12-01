@@ -726,19 +726,19 @@ public class PaymentService : IPaymentService
     }
 
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request){
-        var payment = _mapper.Map<Payment>(request);
-        payment.BillId = ExtractBillIdFromContent(request.Content);
-        // var history = new Payment
-        // {
-        //     BillId = Guid.Empty,
-        //     TransactionId = request.TransactionId,
-        //     TransferAmount =  request.TransferAmount,
-        //     Content =  request.Content,
-        //     AccountNumber = request.AccountNumber,
-        //     Gateway = request.Gateway,
-        //     TransferType = request.TransferType,
-       //     TransactionDate = DateTime.UtcNow,
-      //  };
+      //  var payment = _mapper.Map<Payment>(request);
+        // payment.BillId = ExtractBillIdFromContent(request.Content);
+        var payment = new Payment
+        {
+            BillId =  ExtractBillIdFromContent(request.Content),
+            TransactionId = request.TransactionId,
+            TransferAmount =  request.TransferAmount,
+            Content =  request.Content,
+            AccountNumber = request.AccountNumber,
+            Gateway = request.Gateway,
+            TransferType = request.TransferType,
+           TransactionDate = DateTime.UtcNow,
+       };
       
         await _paymentRepository.CreateAsync(payment);
         return ApiResponse<bool>.Success(true,"Payment Successfully");
