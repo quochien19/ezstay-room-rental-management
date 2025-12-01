@@ -1,98 +1,151 @@
+// using MongoDB.Driver;
+// using PaymentAPI.Model;
+// using PaymentAPI.Repository.Interface;
+// using Shared.Enums;
+//
+// namespace PaymentAPI.Repository;
+//
+// public class PaymentRepository : IPaymentRepository
+// {
+//     private readonly IMongoCollection<Payment> _payments;
+//
+//     public PaymentRepository(IMongoDatabase database)
+//     {
+//         _payments = database.GetCollection<Payment>("Payments");
+//         
+//         // Create indexes
+//         var indexKeys = Builders<Payment>.IndexKeys;
+//         _payments.Indexes.CreateMany(new[]
+//         {
+//             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.UtilityBillId)),
+//             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.TenantId)),
+//             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.PaymentCode)),
+//             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.Status))
+//         });
+//     }
+//
+//     public async Task<Payment?> GetByIdAsync(Guid id)
+//     {
+//         return await _payments.Find(p => p.Id == id).FirstOrDefaultAsync();
+//     }
+//
+//     public async Task<Payment?> GetByBillIdAndStatusAsync(Guid billId, params PaymentStatus[] statuses)
+//     {
+//         var filter = Builders<Payment>.Filter.And(
+//             Builders<Payment>.Filter.Eq(p => p.UtilityBillId, billId),
+//             Builders<Payment>.Filter.In(p => p.Status, statuses)
+//         );
+//         return await _payments.Find(filter)
+//             .SortByDescending(p => p.CreatedAt)
+//             .FirstOrDefaultAsync();
+//     }
+//
+//     public async Task<Payment?> GetByPaymentCodeAsync(string paymentCode)
+//     {
+//         return await _payments.Find(p => p.PaymentCode == paymentCode)
+//             .SortByDescending(p => p.CreatedAt)
+//             .FirstOrDefaultAsync();
+//     }
+//
+//     public async Task<List<Payment>> GetByBillIdAsync(Guid billId)
+//     {
+//         return await _payments.Find(p => p.UtilityBillId == billId)
+//             .SortByDescending(p => p.CreatedAt)
+//             .ToListAsync();
+//     }
+//
+//     public async Task<List<Payment>> GetByUserIdAsync(Guid userId)
+//     {
+//         return await _payments.Find(p => p.TenantId == userId)
+//             .SortByDescending(p => p.CreatedAt)
+//             .ToListAsync();
+//     }
+//
+//     public async Task<List<Payment>> GetPendingApprovalsByOwnerIdAsync(Guid ownerId)
+//     {
+//         return await _payments.Find(p => 
+//             p.OwnerId == ownerId && 
+//             p.Status == PaymentStatus.PendingApproval)
+//             .SortByDescending(p => p.CreatedAt)
+//             .ToListAsync();
+//     }
+//
+//     public async Task<Payment?> GetLatestByBillIdAsync(Guid billId)
+//     {
+//         return await _payments.Find(p => p.UtilityBillId == billId)
+//             .SortByDescending(p => p.CreatedAt)
+//             .FirstOrDefaultAsync();
+//     }
+//
+//     public async Task<Payment> CreateAsync(Payment payment)
+//     {
+//         payment.CreatedAt = DateTime.UtcNow;
+//         await _payments.InsertOneAsync(payment);
+//         return payment;
+//     }
+//
+//     public async Task<Payment> UpdateAsync(Payment payment)
+//     {
+//         payment.UpdatedAt = DateTime.UtcNow;
+//         await _payments.ReplaceOneAsync(p => p.Id == payment.Id, payment);
+//         return payment;
+//     }
+//
+//     public async Task<bool> ExistsAsync(Guid id)
+//     {
+//         return await _payments.Find(p => p.Id == id).AnyAsync();
+//     }
+// }
+
+
 using MongoDB.Driver;
 using PaymentAPI.Model;
 using PaymentAPI.Repository.Interface;
-using Shared.Enums;
 
 namespace PaymentAPI.Repository;
 
 public class PaymentRepository : IPaymentRepository
 {
-    private readonly IMongoCollection<Payment> _payments;
+    private readonly IMongoCollection<Payment> _payment;
 
     public PaymentRepository(IMongoDatabase database)
     {
-        _payments = database.GetCollection<Payment>("Payments");
-        
-        // Create indexes
-        var indexKeys = Builders<Payment>.IndexKeys;
-        _payments.Indexes.CreateMany(new[]
-        {
-            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.UtilityBillId)),
-            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.TenantId)),
-            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.PaymentCode)),
-            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.Status))
-        });
+        _payment = database.GetCollection<Payment>("Payments");
     }
 
-    public async Task<Payment?> GetByIdAsync(Guid id)
+    public async Task<Payment> GetByIdAsync(Guid id)
     {
-        return await _payments.Find(p => p.Id == id).FirstOrDefaultAsync();
+        return await _payment.Find(h => h.Id == id).FirstOrDefaultAsync();
     }
 
-    public async Task<Payment?> GetByBillIdAndStatusAsync(Guid billId, params PaymentStatus[] statuses)
+    // public async Task<List<Payment>> GetByPaymentIdAsync(Guid paymentId)
+    // {
+    //     return await _payment.Find(h => h.PaymentId == paymentId)
+    //         .SortByDescending(h => h.CreatedAt)
+    //         .ToListAsync();
+    // }
+
+    // public async Task<List<PaymentHistory>> GetByBillIdAsync(Guid billId)
+    // {
+    //     return await _histories.Find(h => h.UtilityBillId == billId)
+    //         .SortByDescending(h => h.CreatedAt)
+    //         .ToListAsync();
+    // }
+
+    public async Task<Payment> GetBySePayTransactionIdAsync(string transactionId)
     {
-        var filter = Builders<Payment>.Filter.And(
-            Builders<Payment>.Filter.Eq(p => p.UtilityBillId, billId),
-            Builders<Payment>.Filter.In(p => p.Status, statuses)
-        );
-        return await _payments.Find(filter)
-            .SortByDescending(p => p.CreatedAt)
+        return await _payment.Find(h => h.TransactionId == transactionId)
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Payment?> GetByPaymentCodeAsync(string paymentCode)
+    public async Task<Payment> CreateAsync(Payment history)
     {
-        return await _payments.Find(p => p.PaymentCode == paymentCode)
-            .SortByDescending(p => p.CreatedAt)
-            .FirstOrDefaultAsync();
+        await _payment.InsertOneAsync(history);
+        return history;
     }
 
-    public async Task<List<Payment>> GetByBillIdAsync(Guid billId)
+    public async Task<bool> ExistsByTransactionIdAsync(string transactionId)
     {
-        return await _payments.Find(p => p.UtilityBillId == billId)
-            .SortByDescending(p => p.CreatedAt)
-            .ToListAsync();
-    }
-
-    public async Task<List<Payment>> GetByUserIdAsync(Guid userId)
-    {
-        return await _payments.Find(p => p.TenantId == userId)
-            .SortByDescending(p => p.CreatedAt)
-            .ToListAsync();
-    }
-
-    public async Task<List<Payment>> GetPendingApprovalsByOwnerIdAsync(Guid ownerId)
-    {
-        return await _payments.Find(p => 
-            p.OwnerId == ownerId && 
-            p.Status == PaymentStatus.PendingApproval)
-            .SortByDescending(p => p.CreatedAt)
-            .ToListAsync();
-    }
-
-    public async Task<Payment?> GetLatestByBillIdAsync(Guid billId)
-    {
-        return await _payments.Find(p => p.UtilityBillId == billId)
-            .SortByDescending(p => p.CreatedAt)
-            .FirstOrDefaultAsync();
-    }
-
-    public async Task<Payment> CreateAsync(Payment payment)
-    {
-        payment.CreatedAt = DateTime.UtcNow;
-        await _payments.InsertOneAsync(payment);
-        return payment;
-    }
-
-    public async Task<Payment> UpdateAsync(Payment payment)
-    {
-        payment.UpdatedAt = DateTime.UtcNow;
-        await _payments.ReplaceOneAsync(p => p.Id == payment.Id, payment);
-        return payment;
-    }
-
-    public async Task<bool> ExistsAsync(Guid id)
-    {
-        return await _payments.Find(p => p.Id == id).AnyAsync();
+        return await _payment.Find(h => h.TransactionId == transactionId).AnyAsync();
     }
 }

@@ -1,4 +1,5 @@
 using AutoMapper;
+using PaymentAPI.DTOs.Responses;
 using PaymentAPI.Model;
 using PaymentAPI.Services.Interfaces;
 
@@ -9,6 +10,6 @@ public class PaymentMappingProfile : Profile
     public PaymentMappingProfile()
     {
         CreateMap<Payment, PaymentResponse>();
-        CreateMap<PaymentHistory, PaymentHistoryResponse>();
+        // CreateMap<PaymentHistory, PaymentHistoryResponse>();
     }
 }

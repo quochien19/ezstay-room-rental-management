@@ -33,10 +33,11 @@ builder.Services.AddScoped<IBankGatewayService, BankGatewayService>();
 builder.Services.AddHttpClient<IBankGatewayService, BankGatewayService>();
 
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+
 builder.Services.AddHttpClient<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
+// builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
 
 builder.Services.AddHttpClient<ISePayService, SePayService>();
 builder.Services.AddScoped<ISePayService, SePayService>();
