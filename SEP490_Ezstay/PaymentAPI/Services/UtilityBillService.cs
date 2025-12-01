@@ -25,26 +25,17 @@ public class UtilityBillService : IUtilityBillService
         //     return false;
         // }
 
-        var internalApiUrl = $"/api/UtilityBills/{billId}/mark-paid-internal";
+        var internalApiUrl = $"api/UtilityBills/{billId}/mark-paid-internal";
             // Endpoint MarkAsPaidInternal không yêu cầu Body, chỉ cần gọi PUT
             var response = await _httpClient.PutAsync(internalApiUrl, null);
 
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation($"✅ Bill {billId} marked as paid successfully.");
-                return true;
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"⚠️ Failed to mark bill {billId} as paid. Status: {response.StatusCode}. Error: {errorContent}");
-                return false;
-            }
-        // }
-        // catch (Exception ex)
-        // {
-        //     _logger.LogError(ex, $"Error calling UtilityBillAPI at {internalApiUrl} for bill {billId}");
-        //     return false;
-        // }
+           return response.IsSuccessStatusCode;
+
+            // }
+            // catch (Exception ex)
+            // {
+            //     _logger.LogError(ex, $"Error calling UtilityBillAPI at {internalApiUrl} for bill {billId}");
+            //     return false;
+            // }
     }
 }

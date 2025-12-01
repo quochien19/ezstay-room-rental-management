@@ -717,8 +717,6 @@ public class PaymentService : IPaymentService
     public PaymentService(
         IPaymentRepository paymentRepository,
         IUtilityBillService utilityBillService,
-        HttpClient httpClient,
-        IConfiguration configuration,
         IMapper mapper) {
         _paymentRepository = paymentRepository;
         _utilityBillService = utilityBillService;
@@ -741,6 +739,12 @@ public class PaymentService : IPaymentService
        };
       
         await _paymentRepository.CreateAsync(payment);
+        // await _utilityBillService.MarkBillAsPaidInternalAsync(payment.BillId);
+        if (payment.BillId != Guid.Empty)
+        {
+            await _utilityBillService.MarkBillAsPaidInternalAsync(payment.BillId);
+        }
+        
         return ApiResponse<bool>.Success(true,"Payment Successfully");
     }
     private Guid ExtractBillIdFromContent(string content)
