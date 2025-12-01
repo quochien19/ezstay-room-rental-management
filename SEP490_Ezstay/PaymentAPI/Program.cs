@@ -43,10 +43,10 @@ builder.Services.AddHttpClient<ISePayService, SePayService>();
 builder.Services.AddScoped<ISePayService, SePayService>();
 
 // Utility Bill Service (HTTP Client to UtilityBillAPI) - OPTIONAL
-var utilityBillApiUrl = builder.Configuration["ServiceUrls:UtilityBillAPI"];
+// var utilityBillApiUrl = builder.Configuration["ServiceUrls:UtilityBillAPI"];/
 builder.Services.AddHttpClient<IUtilityBillService, UtilityBillService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:BillAPI"]); 
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:UtilityBillAPI"]); 
 });
 // if (!string.IsNullOrEmpty(utilityBillApiUrl) && Uri.TryCreate(utilityBillApiUrl, UriKind.Absolute, out _))
 // {
