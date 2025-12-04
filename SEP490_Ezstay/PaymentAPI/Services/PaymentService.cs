@@ -729,7 +729,6 @@ public class PaymentService : IPaymentService
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request)
     {
         var billId = ExtractBillIdFromContent(request.Content);
-        
         // Lấy TenantId và OwnerId từ Bill
         Guid tenantId = Guid.Empty;
         Guid ownerId = Guid.Empty;
@@ -737,16 +736,8 @@ public class PaymentService : IPaymentService
         if (billId != Guid.Empty)
         {
             var bill = await _utilityBillService.GetBillByIdAsync(billId);
-            if (bill != null)
-            {
                 tenantId = bill.TenantId;
                 ownerId = bill.OwnerId;
-                _logger.LogInformation($"📝 Got bill info: TenantId={tenantId}, OwnerId={ownerId}");
-            }
-            else
-            {
-                _logger.LogWarning($"⚠️ Bill not found for ID: {billId}");
-            }
         }
         
         var payment = new Payment
@@ -764,7 +755,7 @@ public class PaymentService : IPaymentService
         };
       
         await _paymentRepository.CreateAsync(payment);
-        _logger.LogInformation($"✅ Payment saved: Id={payment.Id}, BillId={billId}, TenantId={tenantId}, OwnerId={ownerId}");
+      //  _logger.LogInformation($"✅ Payment saved: Id={payment.Id}, BillId={billId}, TenantId={tenantId}, OwnerId={ownerId}");
         
         if (billId != Guid.Empty)
         {
@@ -773,39 +764,18 @@ public class PaymentService : IPaymentService
         
         return ApiResponse<bool>.Success(true, "Payment Successfully");
     }
-    
-    /// <summary>
-    /// Lấy lịch sử thanh toán theo TenantId (người thuê)
-    /// </summary>
-    public async Task<ApiResponse<List<Payment>>> GetPaymentsByTenantIdAsync(Guid tenantId)
+
+    public async Task<ApiResponse<List<Payment>>> GetPaymentHistoryByTenantIdAsync(Guid userId)
     {
-        try
-        {
-            var payments = await _paymentRepository.GetByTenantIdAsync(tenantId);
-            return ApiResponse<List<Payment>>.Success(payments, $"Found {payments.Count} payments");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error getting payments for tenant {tenantId}");
-            return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
-        }
+        var payments = await _paymentRepository.GetByTenantIdAsync(userId);
+        return ApiResponse<List<Payment>>.Success(payments, "true");
+
     }
-    
-    /// <summary>
-    /// Lấy lịch sử thanh toán theo OwnerId (chủ trọ)
-    /// </summary>
-    public async Task<ApiResponse<List<Payment>>> GetPaymentsByOwnerIdAsync(Guid ownerId)
+
+    public async Task<ApiResponse<List<Payment>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId)
     {
-        try
-        {
-            var payments = await _paymentRepository.GetByOwnerIdAsync(ownerId);
-            return ApiResponse<List<Payment>>.Success(payments, $"Found {payments.Count} payments");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error getting payments for owner {ownerId}");
-            return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
-        }
+        var payments = await _paymentRepository.GetByOwnerIdAsync(ownerId);
+        return ApiResponse<List<Payment>>.Success(payments, "true");
     }
     
     /// <summary>
@@ -822,6 +792,88 @@ public class PaymentService : IPaymentService
         {
             _logger.LogError(ex, $"Error getting payments for bill {billId}");
             return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
+        }
+    }
+    
+
+    /// <summary>
+    /// Lấy lịch sử thanh toán theo BillId
+    /// </summary>
+    public async Task<ApiResponse<List<Payment>>> GetPaymentHistoryByBillIdAsync(Guid billId)
+    {
+        try
+        {
+            var payments = await _paymentRepository.GetByBillIdAsync(billId);
+            var orderedPayments = payments.OrderByDescending(p => p.TransactionDate).ToList();
+            return ApiResponse<List<Payment>>.Success(orderedPayments, $"Tìm thấy {orderedPayments.Count} giao dịch");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting payment history for bill {billId}");
+            return ApiResponse<List<Payment>>.Fail($"Lỗi: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Lấy chi tiết payment theo ID
+    /// </summary>
+    public async Task<ApiResponse<Payment>> GetPaymentByIdAsync(Guid paymentId)
+    {
+        try
+        {
+            var payment = await _paymentRepository.GetByIdAsync(paymentId);
+            if (payment == null)
+            {
+                return ApiResponse<Payment>.Fail("Không tìm thấy giao dịch");
+            }
+            return ApiResponse<Payment>.Success(payment);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting payment {paymentId}");
+            return ApiResponse<Payment>.Fail($"Lỗi: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Check trạng thái thanh toán của bill
+    /// </summary>
+    public async Task<ApiResponse<BillPaymentStatusResponse>> GetBillPaymentStatusAsync(Guid billId)
+    {
+        try
+        {
+            var payments = await _paymentRepository.GetByBillIdAsync(billId);
+            
+            if (payments == null || !payments.Any())
+            {
+                return ApiResponse<BillPaymentStatusResponse>.Success(new BillPaymentStatusResponse
+                {
+                    BillId = billId,
+                    IsPaid = false,
+                    Status = "Pending",
+                    Message = "Chưa có thanh toán"
+                });
+            }
+
+            // Lấy payment mới nhất
+            var latestPayment = payments.OrderByDescending(p => p.TransactionDate).First();
+            
+            return ApiResponse<BillPaymentStatusResponse>.Success(new BillPaymentStatusResponse
+            {
+                BillId = billId,
+                IsPaid = true,
+                Status = "Success",
+                PaymentId = latestPayment.Id,
+                TransactionId = latestPayment.TransactionId,
+                PaidAmount = latestPayment.TransferAmount,
+                PaidDate = latestPayment.TransactionDate,
+                Message = "Đã thanh toán"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error getting bill payment status for {billId}");
+            return ApiResponse<BillPaymentStatusResponse>.Fail($"Lỗi: {ex.Message}");
         }
     }
     

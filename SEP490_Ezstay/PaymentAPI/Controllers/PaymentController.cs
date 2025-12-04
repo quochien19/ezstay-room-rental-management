@@ -417,82 +417,55 @@ public class PaymentController : ControllerBase
             }
             return Ok(result);
     }
-    //
-    // /// Check xem bill đã được thanh toán chưa (dùng cho polling từ frontend)
-    // /// Frontend có thể gọi API này mỗi 3-5s sau khi show QR
-    // [HttpGet("bill/{billId}/payment-status")]
-    // [Authorize]
-    // public async Task<IActionResult> GetBillPaymentStatus(Guid billId)
-    // {
-    //     var result = await _paymentService.GetBillPaymentStatusAsync(billId);
-    //     
-    //     if (!result.IsSuccess)
-    //     {
-    //         return BadRequest(result);
-    //     }
-    //     
-    //     return Ok(result);
-    //}
-
-    /// <summary>
-    /// Check bill payment status - Polling endpoint để frontend tự động check
-    /// Chỉ check database, không gọi SePay API
-    /// </summary>
-    // [HttpGet("check-payment/{billId}")]
-    // [AllowAnonymous] // Allow polling without auth
-    // public async Task<IActionResult> CheckBillPaymentStatus(Guid billId)
-    // {
-    //     try
-    //     {
-    //         // Get bill payment status from database only (not calling SePay)
-    //         var result = await _paymentService.GetBillPaymentStatusAsync(billId);
-    //         
-    //         if (!result.IsSuccess)
-    //         {
-    //             return Ok(new { isPaid = false, message = result.Message });
-    //         }
-    //         
-    //         // Check if IsPaid is true or Status is "Success"
-    //         var isPaid = result.Data?.IsPaid == true || result.Data?.Status == "Success";
-    //         return Ok(new 
-    //         { 
-    //             isPaid = isPaid,
-    //             status = result.Data?.Status,
-    //             paymentId = result.Data?.PaymentId,
-    //             transactionId = result.Data?.TransactionId,
-    //             paidAmount = result.Data?.PaidAmount,
-    //             paidDate = result.Data?.PaidDate,
-    //             message = result.Data?.Message ?? result.Message 
-    //         });
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         return Ok(new { isPaid = false, message = "Chưa thanh toán" });
-    //     }
-    // }
-
-    /// <summary>
-    /// Lấy lịch sử thanh toán của một payment
-    /// </summary>
-    // [HttpGet("{paymentId}/history")]
-    // [Authorize]
-    // public async Task<IActionResult> GetPaymentHistory(Guid paymentId)
-    // {
-    //     var result = await _paymentService.GetPaymentHistoryAsync(paymentId);
-    //     
-    //     if (!result.IsSuccess)
-    //     {
-    //         return BadRequest(result);
-    //     }
-    //     
-    //     return Ok(result);
-    // }
-    //
+    
+    [HttpGet("history/user")]
+    [Authorize(Roles = "User")]
+    public async Task<IActionResult> GetPaymentHistoryByUser()
+    {
+        var tenantId = GetCurrentUserId();
+        var result = await _paymentService.GetPaymentHistoryByTenantIdAsync(tenantId);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result.Message);
+        }
+        
+        return Ok(result);
+    }
+    [HttpGet("history/owner")]
+    [Authorize(Roles = "Owner")]
+    public async Task<IActionResult> GetPaymentHistoryByOwner()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _paymentService.GetPaymentHistoryByOwnerIdAsync(userId);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result.Message);
+        }
+        return Ok(result);
+    }
+    [HttpGet("bill/{billId}/history")]
+    [Authorize]
+    public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
+    {
+        var result = await _paymentService.GetPaymentHistoryByBillIdAsync(billId);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        
+        return Ok(result);
+    }
+    // /// <summary>
+    // /// Lấy lịch sử thanh toán của một bill cụ thể
+    // /// </summary>
     // [HttpGet("bill/{billId}/history")]
     // [Authorize]
     // public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
     // {
-    //     var result = await _paymentService.GetBillPaymentHistoryAsync(billId);
+    //     var result = await _paymentService.GetPaymentHistoryByBillIdAsync(billId);
     //     
     //     if (!result.IsSuccess)
     //     {
@@ -501,6 +474,40 @@ public class PaymentController : ControllerBase
     //     
     //     return Ok(result);
     // }
+
+    /// <summary>
+    /// Lấy chi tiết một payment theo ID
+    /// </summary>
+    [HttpGet("{paymentId}")]
+    [Authorize]
+    public async Task<IActionResult> GetPaymentById(Guid paymentId)
+    {
+        var result = await _paymentService.GetPaymentByIdAsync(paymentId);
+        
+        if (!result.IsSuccess)
+        {
+            return NotFound(result);
+        }
+        
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Check trạng thái thanh toán của bill (dùng cho polling)
+    /// </summary>
+    [HttpGet("bill/{billId}/payment-status")]
+    [Authorize]
+    public async Task<IActionResult> GetBillPaymentStatus(Guid billId)
+    {
+        var result = await _paymentService.GetBillPaymentStatusAsync(billId);
+        
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        
+        return Ok(result);
+    }
     
     private Guid GetCurrentUserId()
     {

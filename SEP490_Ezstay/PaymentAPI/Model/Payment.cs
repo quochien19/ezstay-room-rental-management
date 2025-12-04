@@ -67,23 +67,16 @@ public class Payment
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid BillId { get; set; }
     
-    /// <summary>
-    /// ID người thuê (người thanh toán)
-    /// </summary>
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid TenantId { get; set; }
     
-    /// <summary>
-    /// ID chủ trọ (người nhận tiền)
-    /// </summary>
     [BsonGuidRepresentation(GuidRepresentation.Standard)]
     public Guid OwnerId { get; set; }
-    
     public string TransactionId { get; set; }
     public decimal TransferAmount { get; set; }
     public string Content { get; set; }
     public string AccountNumber { get; set; }
-    public string Gateway { get; set; } // Tên ngân hàng
+    public string Gateway { get; set; }
     public string TransferType { get; set; } // in/out
     public DateTime TransactionDate { get; set; }
 }

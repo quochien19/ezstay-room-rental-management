@@ -117,18 +117,35 @@ public interface IPaymentService
 {
     Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request);
     
-    /// <summary>
-    /// Lấy lịch sử thanh toán theo TenantId (người thuê)
-    /// </summary>
-    Task<ApiResponse<List<Payment>>> GetPaymentsByTenantIdAsync(Guid tenantId);
-    
-    /// <summary>
-    /// Lấy lịch sử thanh toán theo OwnerId (chủ trọ)
-    /// </summary>
-    Task<ApiResponse<List<Payment>>> GetPaymentsByOwnerIdAsync(Guid ownerId);
-    
+  
+    Task<ApiResponse<List<Payment>>> GetPaymentHistoryByTenantIdAsync(Guid userId);
+    Task<ApiResponse<List<Payment>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId);
+
     /// <summary>
     /// Lấy lịch sử thanh toán theo BillId
     /// </summary>
-    Task<ApiResponse<List<Payment>>> GetPaymentsByBillIdAsync(Guid billId);
+    Task<ApiResponse<List<Payment>>> GetPaymentHistoryByBillIdAsync(Guid billId);
+    
+    /// <summary>
+    /// Lấy chi tiết một payment theo ID
+    /// </summary>
+    Task<ApiResponse<Payment>> GetPaymentByIdAsync(Guid paymentId);
+    
+    /// <summary>
+    /// Check trạng thái thanh toán của bill
+    /// </summary>
+    Task<ApiResponse<BillPaymentStatusResponse>> GetBillPaymentStatusAsync(Guid billId);
+}
+
+// Response DTO cho bill payment status
+public class BillPaymentStatusResponse
+{
+    public Guid BillId { get; set; }
+    public bool IsPaid { get; set; }
+    public string Status { get; set; } = "Pending";
+    public Guid? PaymentId { get; set; }
+    public string? TransactionId { get; set; }
+    public decimal? PaidAmount { get; set; }
+    public DateTime? PaidDate { get; set; }
+    public string? Message { get; set; }
 }
