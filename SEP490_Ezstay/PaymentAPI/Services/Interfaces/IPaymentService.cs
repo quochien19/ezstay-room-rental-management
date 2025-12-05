@@ -107,6 +107,7 @@
 
 
 using PaymentAPI.DTOs.Requests;
+using PaymentAPI.DTOs.Responses;
 using PaymentAPI.Model;
 using Shared.DTOs;
 using Shared.Enums;
@@ -118,8 +119,8 @@ public interface IPaymentService
     Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request);
     
   
-    Task<ApiResponse<List<Payment>>> GetPaymentHistoryByTenantIdAsync(Guid userId);
-    Task<ApiResponse<List<Payment>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId);
+    Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByTenantIdAsync(Guid userId);
+    Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId);
 
     /// <summary>
     /// Lấy lịch sử thanh toán theo BillId

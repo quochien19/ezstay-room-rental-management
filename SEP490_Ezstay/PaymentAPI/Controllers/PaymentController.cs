@@ -335,56 +335,6 @@
 //     }
 //     */
 //
-//     // Helper method
-//     private Guid GetCurrentUserId()
-//     {
-//         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-//                          ?? User.FindFirst("userId")?.Value
-//                          ?? User.FindFirst("sub")?.Value;
-//         
-//         if (string.IsNullOrEmpty(userIdClaim))
-//         {
-//             throw new UnauthorizedAccessException("User not authenticated");
-//         }
-//
-//         return Guid.Parse(userIdClaim);
-//     }
-// }
-//
-// // DTO for SePay Webhook - Match với format từ SePay
-// public class SePayWebhookRequest
-// {
-//     // SePay fields
-//     public string Gateway { get; set; } = string.Empty;
-//     public string AccountNumber { get; set; } = string.Empty;
-//     // public string? SubAccount { get; set; }
-//     // public string? Code { get; set; }
-//     public string Content { get; set; } = string.Empty;
-//     // public string TransferType { get; set; } = string.Empty;
-//     // public string? Description { get; set; }
-//     public decimal TransferAmount { get; set; }
-//     // public string? ReferenceCode { get; set; }
-//     // public decimal Accumulated { get; set; }
-//     
-//     // Transaction ID - SePay gửi dạng số (int/long)
-//     [System.Text.Json.Serialization.JsonPropertyName("id")]
-//     public long IdNumber { get; set; }
-//     
-//     // Convert to string for use
-//     [System.Text.Json.Serialization.JsonIgnore]
-//     public string Id => IdNumber.ToString();
-//     
-//     // Legacy compatibility - map từ fields mới
-//     [System.Text.Json.Serialization.JsonIgnore]
-//     public decimal Amount => TransferAmount;
-//     
-//     [System.Text.Json.Serialization.JsonIgnore]
-//     public string TransactionId => Id;
-//     
-//     [System.Text.Json.Serialization.JsonIgnore]
-//     public string BankBrandName => Gateway;
-// }
-
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -458,22 +408,6 @@ public class PaymentController : ControllerBase
         
         return Ok(result);
     }
-    // /// <summary>
-    // /// Lấy lịch sử thanh toán của một bill cụ thể
-    // /// </summary>
-    // [HttpGet("bill/{billId}/history")]
-    // [Authorize]
-    // public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
-    // {
-    //     var result = await _paymentService.GetPaymentHistoryByBillIdAsync(billId);
-    //     
-    //     if (!result.IsSuccess)
-    //     {
-    //         return BadRequest(result);
-    //     }
-    //     
-    //     return Ok(result);
-    // }
 
     /// <summary>
     /// Lấy chi tiết một payment theo ID

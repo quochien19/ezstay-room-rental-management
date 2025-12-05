@@ -765,17 +765,17 @@ public class PaymentService : IPaymentService
         return ApiResponse<bool>.Success(true, "Payment Successfully");
     }
 
-    public async Task<ApiResponse<List<Payment>>> GetPaymentHistoryByTenantIdAsync(Guid userId)
+    public async Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByTenantIdAsync(Guid userId)
     {
         var payments = await _paymentRepository.GetByTenantIdAsync(userId);
-        return ApiResponse<List<Payment>>.Success(payments, "true");
-
+        return ApiResponse<List<PaymentResponse>>.Success(_mapper.Map<List<PaymentResponse>>(payments), "true");
     }
 
-    public async Task<ApiResponse<List<Payment>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId)
+    public async Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId)
     {
         var payments = await _paymentRepository.GetByOwnerIdAsync(ownerId);
-        return ApiResponse<List<Payment>>.Success(payments, "true");
+        
+        return ApiResponse<List<PaymentResponse>>.Success(_mapper.Map<List<PaymentResponse>>(payments), "true");
     }
     
     /// <summary>
