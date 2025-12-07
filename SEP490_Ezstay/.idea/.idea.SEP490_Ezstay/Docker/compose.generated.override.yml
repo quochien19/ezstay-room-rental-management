@@ -1,26 +1,8 @@
 # This is a generated file. Not intended for manual editing.
 services:
-  amenityapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "AmenityAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/AmenityAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "amenityapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/AmenityAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
   apigateway:
     build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
+      context: "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay"
       dockerfile: "ApiGateway/Dockerfile"
       target: "base"
     command: []
@@ -33,12 +15,12 @@ services:
     ports: []
     volumes:
     - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/APIGateway:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay/APIGateway:/app:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay:/src:rw"
     working_dir: "/app"
   authapi:
     build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
+      context: "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay"
       dockerfile: "AuthApi/Dockerfile"
       target: "base"
     command: []
@@ -51,138 +33,12 @@ services:
     ports: []
     volumes:
     - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/AuthApi:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  boardinghouseapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "BoardingHouseAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/BoardingHouseAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "boardinghouseapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/BoardingHouseAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  chatapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "ChatAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/ChatAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "chatapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/ChatAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  contractapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "ContractAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/ContractAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "contractapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/home/app/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/ContractAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  favoritepostapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "FavoritePostAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/FavoritePostAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "favoritepostapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/FavoritePostAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  imageapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "ImageAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/ImageAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "imageapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/ImageAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  mailapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "MailApi/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/MailApi.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "mailapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/MailApi:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  notificationapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "NotificationAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/NotificationAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "notificationapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/NotificationAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay/AuthApi:/app:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay:/src:rw"
     working_dir: "/app"
   paymentapi:
     build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
+      context: "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay"
       dockerfile: "PaymentAPI/Dockerfile"
       target: "base"
     command: []
@@ -195,156 +51,12 @@ services:
     ports: []
     volumes:
     - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/PaymentAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  profileapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "AccountAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/AccountAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "accountapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/AccountAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  rentalpostsapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "RentalPostsAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/RentalPostsAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "rentalpostsapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/RentalPostsAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  reviewapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "ReviewAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/ReviewAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "reviewapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/ReviewAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  reviewreportapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "ReviewReportAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/ReviewReportAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "reviewreportapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/ReviewReportAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  roomamenityapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "RoomAmenityAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/RoomAmenityAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "roomamenityapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/home/app/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/RoomAmenityAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  roomapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "RoomAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/RoomAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "roomapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/RoomAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  serviceapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "ServiceAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/ServiceAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "serviceapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/ServiceAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  signalrhubapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "SignalRHubAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/SignalRHubAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "signalrhubapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/SignalRHubAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay/PaymentAPI:/app:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay:/src:rw"
     working_dir: "/app"
   utilitybillapi:
     build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
+      context: "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay"
       dockerfile: "UtilityBillAPI/Dockerfile"
       target: "base"
     command: []
@@ -357,24 +69,6 @@ services:
     ports: []
     volumes:
     - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/UtilityBillAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
-    working_dir: "/app"
-  utilityreadingapi:
-    build:
-      context: "/Users/Kì 9/MlN/kk/SEP490_Ezstay"
-      dockerfile: "UtilityReadingAPI/Dockerfile"
-      target: "base"
-    command: []
-    entrypoint:
-    - "dotnet"
-    - "/app/bin/Debug/net8.0/UtilityReadingAPI.dll"
-    environment:
-      DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "utilityreadingapi:dev"
-    ports: []
-    volumes:
-    - "/Users/quochien/.nuget/packages:/root/.nuget/packages"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay/UtilityReadingAPI:/app:rw"
-    - "/Users/Kì 9/MlN/kk/SEP490_Ezstay:/src:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay/UtilityBillAPI:/app:rw"
+    - "/Users/Kì 9/DeloymentPAYmentAPI/SEP490_Ezstay:/src:rw"
     working_dir: "/app"

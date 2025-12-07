@@ -729,22 +729,13 @@ public class PaymentService : IPaymentService
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request)
     {
         var billId = ExtractBillIdFromContent(request.Content);
-        // Lấy TenantId và OwnerId từ Bill
-        Guid tenantId = Guid.Empty;
-        Guid ownerId = Guid.Empty;
-        
-        if (billId != Guid.Empty)
-        {
-            var bill = await _utilityBillService.GetBillByIdAsync(billId);
-                tenantId = bill.TenantId;
-                ownerId = bill.OwnerId;
-        }
-        
+        var bill = await _utilityBillService.GetBillByIdAsync(billId);
+            
         var payment = new Payment
         {
             BillId = billId,
-            TenantId = tenantId,
-            OwnerId = ownerId,
+            TenantId =  bill.TenantId,
+            OwnerId =  bill.OwnerId,
             TransactionId = request.TransactionId,
             TransferAmount = request.TransferAmount,
             Content = request.Content,
@@ -755,8 +746,7 @@ public class PaymentService : IPaymentService
         };
       
         await _paymentRepository.CreateAsync(payment);
-      //  _logger.LogInformation($"✅ Payment saved: Id={payment.Id}, BillId={billId}, TenantId={tenantId}, OwnerId={ownerId}");
-        
+     
         if (billId != Guid.Empty)
         {
             await _utilityBillService.MarkBillAsPaidInternalAsync(billId);
@@ -767,13 +757,13 @@ public class PaymentService : IPaymentService
 
     public async Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByTenantIdAsync(Guid userId)
     {
-        var payments = await _paymentRepository.GetByTenantIdAsync(userId);
+        var payments = await _paymentRepository.GetPaymentsByTenantId(userId);
         return ApiResponse<List<PaymentResponse>>.Success(_mapper.Map<List<PaymentResponse>>(payments), "true");
     }
 
     public async Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId)
     {
-        var payments = await _paymentRepository.GetByOwnerIdAsync(ownerId);
+        var payments = await _paymentRepository.GetPaymentsByOwnerId(ownerId);
         
         return ApiResponse<List<PaymentResponse>>.Success(_mapper.Map<List<PaymentResponse>>(payments), "true");
     }
@@ -876,6 +866,89 @@ public class PaymentService : IPaymentService
             return ApiResponse<BillPaymentStatusResponse>.Fail($"Lỗi: {ex.Message}");
         }
     }
+    
+    
+    // public async Task<ApiResponse<RevenueStatsResponse>> GetSystemRevenueStatsAsync()
+    // {
+    //         var payments = await _paymentRepository.GetAllPaymentsAsync();
+    //         var stats = CalculateRevenueStats(payments);
+    //         return ApiResponse<RevenueStatsResponse>.Success(stats);
+    // }
+    //
+    //
+    //
+    // public async Task<ApiResponse<RevenueStatsResponse>> GetOwnerRevenueStatsAsync(Guid ownerId, int? year)
+    // {
+    //    
+    //         var payments = await _paymentRepository.GetPaymentsByOwnerId(ownerId);
+    //
+    //         // 2. Nếu có truyền Year, thì lọc list này trước
+    //         if (year.HasValue)
+    //         {
+    //             payments = payments.Where(p => p.TransactionDate.Year == year.Value).ToList();
+    //         }
+    //
+    //         // 3. Tính toán (Hàm cũ vẫn dùng được)
+    //       //  var stats = CalculateRevenueStats(payments);
+    //
+    //         return ApiResponse<RevenueStatsResponse>.Success(stats);
+    // }
+
+    // private RevenueStatsResponse CalculateRevenueStats(List<Payment> payments)
+    // {
+    //     var response = new RevenueStatsResponse();
+    //
+    //     if (payments == null || !payments.Any())
+    //         return response;
+    //
+    //     response.TotalRevenue = payments.Sum(p => p.TransferAmount);
+    //     response.TotalTransactions = payments.Count;
+    //
+    //     // DAILY
+    //     response.DailyStats = payments
+    //         .GroupBy(p => new { p.TransactionDate.Year, p.TransactionDate.Month, p.TransactionDate.Day })
+    //         .Select(g => new DailyRevenueStats
+    //         {
+    //             Year = g.Key.Year,
+    //             Month = g.Key.Month,
+    //             Day = g.Key.Day,
+    //             Revenue = g.Sum(x => x.TransferAmount),
+    //             TransactionCount = g.Count()
+    //         })
+    //         .OrderByDescending(d => d.Year)
+    //         .ThenByDescending(d => d.Month)
+    //         .ThenByDescending(d => d.Day)
+    //         .ToList();
+    //
+    //     // MONTHLY
+    //     response.MonthlyStats = payments
+    //         .GroupBy(p => new { p.TransactionDate.Year, p.TransactionDate.Month })
+    //         .Select(g => new MonthlyRevenueStats
+    //         {
+    //             Year = g.Key.Year,
+    //             Month = g.Key.Month,
+    //             Revenue = g.Sum(x => x.TransferAmount),
+    //             TransactionCount = g.Count()
+    //         })
+    //         .OrderByDescending(m => m.Year)
+    //         .ThenByDescending(m => m.Month)
+    //         .ToList();
+    //
+    //     // YEARLY
+    //     response.YearlyStats = payments
+    //         .GroupBy(p => p.TransactionDate.Year)
+    //         .Select(g => new YearlyRevenueStats
+    //         {
+    //             Year = g.Key,
+    //             Revenue = g.Sum(x => x.TransferAmount),
+    //             TransactionCount = g.Count()
+    //         })
+    //         .OrderByDescending(y => y.Year)
+    //         .ToList();
+    //
+    //     return response;
+    // }
+
     
     private Guid ExtractBillIdFromContent(string content)
     {

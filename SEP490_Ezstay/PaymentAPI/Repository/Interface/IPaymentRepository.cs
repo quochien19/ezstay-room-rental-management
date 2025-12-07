@@ -34,22 +34,27 @@ namespace PaymentAPI.Repository.Interface;
 public interface IPaymentRepository
 {
     Task<Payment> GetByIdAsync(Guid id);
-    Task<Payment> GetBySePayTransactionIdAsync(string transactionId);
+    // Task<Payment> GetBySePayTransactionIdAsync(string transactionId);
     Task<Payment> CreateAsync(Payment payment);
-    Task<bool> ExistsByTransactionIdAsync(string transactionId);
+    // Task<bool> ExistsByTransactionIdAsync(string transactionId);
     
     /// <summary>
     /// Lấy lịch sử thanh toán theo TenantId (người thuê)
     /// </summary>
-    Task<List<Payment>> GetByTenantIdAsync(Guid tenantId);
+    Task<List<Payment>> GetPaymentsByTenantId(Guid tenantId);
     
     /// <summary>
     /// Lấy lịch sử thanh toán theo OwnerId (chủ trọ)
     /// </summary>
-    Task<List<Payment>> GetByOwnerIdAsync(Guid ownerId);
+    Task<List<Payment>> GetPaymentsByOwnerId(Guid ownerId);
     
     /// <summary>
     /// Lấy lịch sử thanh toán theo BillId
     /// </summary>
     Task<List<Payment>> GetByBillIdAsync(Guid billId);
+
+    // Task<List<Payment>> GetAllPaymentsAsync();
+
+
+
 }

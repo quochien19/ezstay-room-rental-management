@@ -395,36 +395,36 @@ public class PaymentController : ControllerBase
         }
         return Ok(result);
     }
-    [HttpGet("bill/{billId}/history")]
-    [Authorize]
-    public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
-    {
-        var result = await _paymentService.GetPaymentHistoryByBillIdAsync(billId);
-        
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-        
-        return Ok(result);
-    }
+    // [HttpGet("bill/{billId}/history")]
+    // [Authorize]
+    // public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
+    // {
+    //     var result = await _paymentService.GetPaymentHistoryByBillIdAsync(billId);
+    //     
+    //     if (!result.IsSuccess)
+    //     {
+    //         return BadRequest(result);
+    //     }
+    //     
+    //     return Ok(result);
+    // }
 
     /// <summary>
     /// Lấy chi tiết một payment theo ID
     /// </summary>
-    [HttpGet("{paymentId}")]
-    [Authorize]
-    public async Task<IActionResult> GetPaymentById(Guid paymentId)
-    {
-        var result = await _paymentService.GetPaymentByIdAsync(paymentId);
-        
-        if (!result.IsSuccess)
-        {
-            return NotFound(result);
-        }
-        
-        return Ok(result);
-    }
+    // [HttpGet("{paymentId}")]
+    // [Authorize]
+    // public async Task<IActionResult> GetPaymentById(Guid paymentId)
+    // {
+    //     var result = await _paymentService.GetPaymentByIdAsync(paymentId);
+    //     
+    //     if (!result.IsSuccess)
+    //     {
+    //         return NotFound(result);
+    //     }
+    //     
+    //     return Ok(result);
+    // }
 
     /// <summary>
     /// Check trạng thái thanh toán của bill (dùng cho polling)
@@ -442,6 +442,17 @@ public class PaymentController : ControllerBase
         
         return Ok(result);
     }
+    
+    // [HttpGet("stats/owner")]
+    // [Authorize(Roles = "Owner")]
+    // public async Task<IActionResult> GetOwnerStats([FromQuery] int? year)
+    // {
+    //     var ownerId = GetCurrentUserId();
+    //     var result = await _paymentService.GetOwnerRevenueStatsAsync(ownerId, year);
+    //     return Ok(result);
+    // }
+
+
     
     private Guid GetCurrentUserId()
     {

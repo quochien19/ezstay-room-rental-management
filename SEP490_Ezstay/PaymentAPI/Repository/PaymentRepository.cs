@@ -145,14 +145,14 @@ public class PaymentRepository : IPaymentRepository
         return await _payment.Find(h => h.TransactionId == transactionId).AnyAsync();
     }
     
-    public async Task<List<Payment>> GetByTenantIdAsync(Guid tenantId)
+    public async Task<List<Payment>> GetPaymentsByTenantId(Guid tenantId)
     {
         return await _payment.Find(p => p.TenantId == tenantId)
             .SortByDescending(p => p.TransactionDate)
             .ToListAsync();
     }
     
-    public async Task<List<Payment>> GetByOwnerIdAsync(Guid ownerId)
+    public async Task<List<Payment>> GetPaymentsByOwnerId(Guid ownerId)
     {
         return await _payment.Find(p => p.OwnerId == ownerId)
             .SortByDescending(p => p.TransactionDate)
@@ -162,6 +162,13 @@ public class PaymentRepository : IPaymentRepository
     public async Task<List<Payment>> GetByBillIdAsync(Guid billId)
     {
         return await _payment.Find(p => p.BillId == billId)
+            .SortByDescending(p => p.TransactionDate)
+            .ToListAsync();
+    }
+    
+    public async Task<List<Payment>> GetAllPaymentsAsync()
+    {
+        return await _payment.Find(_ => true)
             .SortByDescending(p => p.TransactionDate)
             .ToListAsync();
     }
