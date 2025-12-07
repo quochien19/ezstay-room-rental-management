@@ -22,27 +22,27 @@ public class BankGatewayService: IBankGatewayService
         _mapper = mapper;
     }
 
-    // public async Task<List<BankGatewayResponse>> SyncFromVietQR()
-    // {
-    //     var response = await _httpClient.GetStringAsync("https://api.vietqr.io/v2/banks");
-    //     var json = JsonSerializer.Deserialize<JsonElement>(response);
-    //     var list = json.GetProperty("data").EnumerateArray().Select(b => new BankGateway
-    //     {
-    //       //  BankCode = b.GetProperty("code").GetString(),
-    //          FullName = b.GetProperty("name").GetString(),
-    //          BankName = b.GetProperty("shortName").GetString(),
-    //         Logo = b.GetProperty("logo").GetString(),
-    //         IsActive =true
-    //     }).ToList();
-    //
-    //     var existing =  _bankGatewayRepository.GetAll();
-    //     var newBanks = list.Where(b 
-    //         => !existing.Any(e => e.BankName == b.BankName)).ToList();
-    //
-    //     if (newBanks.Any())
-    //         await _bankGatewayRepository.AddMany(newBanks);
-    //     return  _mapper.Map<List<BankGatewayResponse>>(list);
-    // }
+    public async Task<List<BankGatewayResponse>> SyncFromVietQR()
+    {
+        var response = await _httpClient.GetStringAsync("https://api.vietqr.io/v2/banks");
+        var json = JsonSerializer.Deserialize<JsonElement>(response);
+        var list = json.GetProperty("data").EnumerateArray().Select(b => new BankGateway
+        {
+          //  BankCode = b.GetProperty("code").GetString(),
+             FullName = b.GetProperty("name").GetString(),
+             BankName = b.GetProperty("shortName").GetString(),
+            Logo = b.GetProperty("logo").GetString(),
+            IsActive =true
+        }).ToList();
+    
+        var existing =  _bankGatewayRepository.GetAll();
+        var newBanks = list.Where(b 
+            => !existing.Any(e => e.BankName == b.BankName)).ToList();
+    
+        if (newBanks.Any())
+            await _bankGatewayRepository.AddMany(newBanks);
+        return  _mapper.Map<List<BankGatewayResponse>>(list);
+    }
     public async Task<BankGatewayResponse> GetById(Guid id)
     {
         var result=   await _bankGatewayRepository.GetById(id); 
