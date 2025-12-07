@@ -24,12 +24,12 @@ namespace PaymentAPI.Controllers
         }
 
 
-        // [HttpPost("sync")]
-        // public async Task<IActionResult> LoadBankGateway()
-        // {
-        //     var result = await _bankGatewayService.SyncFromVietQR();
-        //     return Ok(result);
-        // }
+        [HttpPost("sync")]
+        public async Task<IActionResult> LoadBankGateway()
+        {
+            var result = await _bankGatewayService.SyncFromVietQR();
+            return Ok(result);
+        }
         [HttpPut("gateway/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> HideBankGateway(Guid id,[FromQuery] bool isActive)
