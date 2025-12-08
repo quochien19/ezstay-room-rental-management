@@ -123,7 +123,7 @@ namespace PaymentAPI.Controllers
         
         [HttpGet("bank-account/owner/{ownerId}")]
         [EnableQuery]
-        [Authorize(Roles = "User, Owner, Admin")]
+        //[Authorize(Roles = "User, Owner, Admin")]
         public IQueryable<BankAccountResponse> GetByOwnerIdForBill(Guid ownerId, [FromQuery] decimal amount, [FromQuery] string? description)
         {
             return _bankAccountService.GetBankAccountsWithAmount(ownerId, amount, description);
