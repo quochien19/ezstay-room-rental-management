@@ -140,7 +140,7 @@ namespace PaymentAPI.Controllers
        
        // hàm mới thêm
        
-       [HttpGet("bank-account/owner/{bankAccountId}")]
+       [HttpGet("bank-account/{bankAccountId}/qr")]
        public async Task<IActionResult> GetByOwnerIdForBill(Guid bankAccountId, [FromQuery] decimal amount, [FromQuery] string description)
        {
            var result = await _bankAccountService.GetBankAccountQR(bankAccountId, amount, description);
