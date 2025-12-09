@@ -15,6 +15,7 @@ namespace PaymentAPI.Services;
 public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
+    private readonly IBankAccountRepository _bankAccountRepository;
     private readonly IUtilityBillService _utilityBillService;
     private readonly IMapper _mapper;
     private readonly ILogger<PaymentService> _logger;
@@ -29,34 +30,66 @@ public class PaymentService : IPaymentService
         _mapper = mapper;
         _logger = logger;
     }
+    
+    
 
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request)
     {
-        var billId = ExtractBillIdFromContent(request.Content);
-        var bill = await _utilityBillService.GetBillByIdAsync(billId);
+        try
+        {
+            _logger.LogInformation($"🔔 Webhook received - Content: {request.Content}, Amount: {request.TransferAmount}, TransactionId: {request.TransactionId}");
             
-        var payment = new Payment
-        {
-            BillId = billId,
-            TenantId =  bill.TenantId,
-            OwnerId =  bill.OwnerId,
-            TransactionId = request.TransactionId,
-            TransferAmount = request.TransferAmount,
-            Content = request.Content,
-            AccountNumber = request.AccountNumber,
-            Gateway = request.Gateway,
-            TransferType = request.TransferType,
-            TransactionDate = DateTime.UtcNow,
-        };
-      
-        await _paymentRepository.CreateAsync(payment);
-     
-        if (billId != Guid.Empty)
-        {
+            // Extract BillId from content (xử lý cả format có dấu - và không có dấu -)
+            var billId = ExtractBillIdFromContent(request.Content);
+            
+            if (billId == Guid.Empty)
+            {
+                _logger.LogError($"❌ Cannot extract BillId from content: {request.Content}");
+                return ApiResponse<bool>.Fail("Cannot extract BillId from payment content");
+            }
+            
+            _logger.LogInformation($"📋 BillId extracted: {billId}");
+            
+            // Get bill information - PHẢI TÌM THẤY BILL MỚI XỬ LÝ TIẾP
+            var bill = await _utilityBillService.GetBillByIdAsync(billId);
+            
+            if (bill == null)
+            {
+                _logger.LogError($"❌ Bill not found: {billId}");
+                return ApiResponse<bool>.Fail($"Bill not found: {billId}");
+            }
+            
+            _logger.LogInformation($"✅ Bill found - BillId: {billId}, TenantId: {bill.TenantId}, OwnerId: {bill.OwnerId}");
+            
+            // LƯU PAYMENT CHỈ KHI TÌM THẤY BILL
+            var payment = new Payment
+            {
+                BillId = billId,
+                TenantId = bill.TenantId,
+                OwnerId = bill.OwnerId,
+                TransactionId = request.TransactionId,
+                TransferAmount = request.TransferAmount,
+                Content = request.Content,
+                AccountNumber = request.AccountNumber,
+                Gateway = request.Gateway ?? "SePay",
+                TransferType = request.TransferType ?? "in",
+                TransactionDate = DateTime.UtcNow,
+            };
+          
+            await _paymentRepository.CreateAsync(payment);
+            _logger.LogInformation($"💾 Payment saved - PaymentId: {payment.Id}, BillId: {billId}, Amount: {request.TransferAmount}");
+         
+            // Mark bill as paid
             await _utilityBillService.MarkBillAsPaidInternalAsync(billId);
+            _logger.LogInformation($"✅ Bill marked as paid: {billId}");
+            
+            return ApiResponse<bool>.Success(true, "Payment processed and bill marked as paid successfully");
         }
-        
-        return ApiResponse<bool>.Success(true, "Payment Successfully");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error processing webhook");
+            return ApiResponse<bool>.Fail($"Error: {ex.Message}");
+        }
     }
 
 
@@ -73,10 +106,6 @@ public class PaymentService : IPaymentService
         return ApiResponse<List<PaymentResponse>>.Success(_mapper.Map<List<PaymentResponse>>(payments), "true");
     }
     
-
-    /// <summary>
-    /// Check trạng thái thanh toán của bill
-    /// </summary>
     public async Task<ApiResponse<BillPaymentStatusResponse>> GetBillPaymentStatusAsync(Guid billId)
     {
         try
@@ -120,7 +149,6 @@ public class PaymentService : IPaymentService
     {
         try
         {
-            // Validate input
             if (string.IsNullOrWhiteSpace(content))
             {
                 _logger.LogWarning("Content is null or empty");
@@ -128,59 +156,21 @@ public class PaymentService : IPaymentService
             }
 
             _logger.LogInformation($"🔍 Extracting BillId from content: {content}");
-
-            // STRATEGY 1: Tìm GUID với dấu gạch ngang (format chuẩn)
-            // Pattern: 8-4-4-4-12 characters (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
-            var guidWithHyphensPattern = @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
-            var matchWithHyphens = System.Text.RegularExpressions.Regex.Match(content, guidWithHyphensPattern);
             
-            if (matchWithHyphens.Success)
-            {
-                if (Guid.TryParse(matchWithHyphens.Value, out var billIdWithHyphens))
-                {
-                    _logger.LogInformation($"✅ Extracted BillId (with hyphens): {billIdWithHyphens}");
-                    return billIdWithHyphens;
-                }
-            }
-
-            // STRATEGY 2: Tìm GUID với dấu cách thay vì dấu gạch ngang
-            // Pattern: 8 4 4 4 12 (có thể có space hoặc không có gì)
-            // Example: "83acf6f6 4f3e 430a 9066 6351420f267c"
-            var guidWithSpacesPattern = @"([0-9a-fA-F]{8})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{12})";
-            var matchWithSpaces = System.Text.RegularExpressions.Regex.Match(content, guidWithSpacesPattern);
+            // Tìm GUID 32 ký tự liền không có dấu gạch ngang (format từ SePay)
+            // Input: 83acf6f64f3e430a90666351420f267c
+            // Output: 83acf6f6-4f3e-430a-9066-6351420f267c
+            var guidPattern = @"[0-9a-fA-F]{32}";
+            var match = System.Text.RegularExpressions.Regex.Match(content, guidPattern);
             
-            if (matchWithSpaces.Success)
-            {
-                var guidString = $"{matchWithSpaces.Groups[1].Value}-{matchWithSpaces.Groups[2].Value}-{matchWithSpaces.Groups[3].Value}-{matchWithSpaces.Groups[4].Value}-{matchWithSpaces.Groups[5].Value}";
-                
-                if (Guid.TryParse(guidString, out var billIdFromSpaces))
-                {
-                    _logger.LogInformation($"✅ Extracted BillId (from spaces): {billIdFromSpaces}");
-                    return billIdFromSpaces;
-                }
-            }
-
-            // STRATEGY 3: Tìm tất cả chuỗi 32 ký tự hex liên tiếp và validate
-            var normalizedContent = content.Replace(" ", "").Replace("-", "").ToUpper();
-            var guidPattern = @"[0-9A-F]{32}";
-            var matches = System.Text.RegularExpressions.Regex.Matches(normalizedContent, guidPattern);
-            
-            foreach (System.Text.RegularExpressions.Match match in matches)
+            if (match.Success)
             {
                 var rawGuidString = match.Value;
+                
                 if (Guid.TryParseExact(rawGuidString, "N", out var billId))
                 {
-                    // Validate: GUID không nên bắt đầu bằng số thuần túy (avoid phone numbers, transaction codes)
-                    var guidStr = billId.ToString();
-                    if (!System.Text.RegularExpressions.Regex.IsMatch(guidStr, @"^[0-9]{8}-[0-9]{4}"))
-                    {
-                        _logger.LogInformation($"✅ Extracted BillId (32 chars): {billId}");
-                        return billId;
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"⚠️ Skipping invalid GUID (all numbers): {billId}");
-                    }
+                    _logger.LogInformation($"✅ Extracted BillId: {billId} from: {rawGuidString}");
+                    return billId;
                 }
             }
             
@@ -193,91 +183,58 @@ public class PaymentService : IPaymentService
             return Guid.Empty;
         }
     }
+      
+      
+    
 }
 
     
-    
-    // public async Task<ApiResponse<RevenueStatsResponse>> GetSystemRevenueStatsAsync()
-    // {
-    //         var payments = await _paymentRepository.GetAllPaymentsAsync();
-    //         var stats = CalculateRevenueStats(payments);
-    //         return ApiResponse<RevenueStatsResponse>.Success(stats);
-    // }
-    //
-    //
-    //
-    // public async Task<ApiResponse<RevenueStatsResponse>> GetOwnerRevenueStatsAsync(Guid ownerId, int? year)
-    // {
-    //    
-    //         var payments = await _paymentRepository.GetPaymentsByOwnerId(ownerId);
-    //
-    //         // 2. Nếu có truyền Year, thì lọc list này trước
-    //         if (year.HasValue)
-    //         {
-    //             payments = payments.Where(p => p.TransactionDate.Year == year.Value).ToList();
-    //         }
-    //
-    //         // 3. Tính toán (Hàm cũ vẫn dùng được)
-    //       //  var stats = CalculateRevenueStats(payments);
-    //
-    //         return ApiResponse<RevenueStatsResponse>.Success(stats);
-    // }
-
-    // private RevenueStatsResponse CalculateRevenueStats(List<Payment> payments)
-    // {
-    //     var response = new RevenueStatsResponse();
-    //
-    //     if (payments == null || !payments.Any())
-    //         return response;
-    //
-    //     response.TotalRevenue = payments.Sum(p => p.TransferAmount);
-    //     response.TotalTransactions = payments.Count;
-    //
-    //     // DAILY
-    //     response.DailyStats = payments
-    //         .GroupBy(p => new { p.TransactionDate.Year, p.TransactionDate.Month, p.TransactionDate.Day })
-    //         .Select(g => new DailyRevenueStats
-    //         {
-    //             Year = g.Key.Year,
-    //             Month = g.Key.Month,
-    //             Day = g.Key.Day,
-    //             Revenue = g.Sum(x => x.TransferAmount),
-    //             TransactionCount = g.Count()
-    //         })
-    //         .OrderByDescending(d => d.Year)
-    //         .ThenByDescending(d => d.Month)
-    //         .ThenByDescending(d => d.Day)
-    //         .ToList();
-    //
-    //     // MONTHLY
-    //     response.MonthlyStats = payments
-    //         .GroupBy(p => new { p.TransactionDate.Year, p.TransactionDate.Month })
-    //         .Select(g => new MonthlyRevenueStats
-    //         {
-    //             Year = g.Key.Year,
-    //             Month = g.Key.Month,
-    //             Revenue = g.Sum(x => x.TransferAmount),
-    //             TransactionCount = g.Count()
-    //         })
-    //         .OrderByDescending(m => m.Year)
-    //         .ThenByDescending(m => m.Month)
-    //         .ToList();
-    //
-    //     // YEARLY
-    //     response.YearlyStats = payments
-    //         .GroupBy(p => p.TransactionDate.Year)
-    //         .Select(g => new YearlyRevenueStats
-    //         {
-    //             Year = g.Key,
-    //             Revenue = g.Sum(x => x.TransferAmount),
-    //             TransactionCount = g.Count()
-    //         })
-    //         .OrderByDescending(y => y.Year)
-    //         .ToList();
-    //
-    //     return response;
-    // }
-
+ // private Guid ExtractBillIdFromContent(string content)
+ //    {
+ //
+ //            
+ //            var guidWithHyphensPattern = @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+ //            var matchWithHyphens = System.Text.RegularExpressions.Regex.Match(content, guidWithHyphensPattern);
+ //            
+ //            if (matchWithHyphens.Success)
+ //            {
+ //                if (Guid.TryParse(matchWithHyphens.Value, out var billIdWithHyphens))
+ //                {
+ //                    return billIdWithHyphens;
+ //                }
+ //            }
+ //            var guidWithSpacesPattern = @"([0-9a-fA-F]{8})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{12})";
+ //            var matchWithSpaces = System.Text.RegularExpressions.Regex.Match(content, guidWithSpacesPattern);
+ //            
+ //            if (matchWithSpaces.Success)
+ //            {
+ //                var guidString = $"{matchWithSpaces.Groups[1].Value}-{matchWithSpaces.Groups[2].Value}-{matchWithSpaces.Groups[3].Value}-{matchWithSpaces.Groups[4].Value}-{matchWithSpaces.Groups[5].Value}";
+ //                
+ //                if (Guid.TryParse(guidString, out var billIdFromSpaces))
+ //                {
+ //                    return billIdFromSpaces;
+ //                }
+ //            }
+ //            
+ //            var normalizedContent = content.Replace(" ", "").Replace("-", "").ToUpper();
+ //            var guidPattern = @"[0-9A-F]{32}";
+ //            var matches = System.Text.RegularExpressions.Regex.Matches(normalizedContent, guidPattern);
+ //            
+ //            foreach (System.Text.RegularExpressions.Match match in matches)
+ //            {
+ //                var rawGuidString = match.Value;
+ //                if (Guid.TryParseExact(rawGuidString, "N", out var billId))
+ //                {
+ //                    var guidStr = billId.ToString();
+ //                    if (!System.Text.RegularExpressions.Regex.IsMatch(guidStr, @"^[0-9]{8}-[0-9]{4}"))
+ //                    {
+ //                        return billId;
+ //                    }
+ //                }
+ //            }
+ //            return Guid.Empty;
+ //      
+ //    }
     
 //     private Guid ExtractBillIdFromContent(string content)
 //     {

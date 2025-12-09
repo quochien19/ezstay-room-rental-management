@@ -121,13 +121,13 @@ namespace PaymentAPI.Controllers
             return  _bankAccountService.GetDefaultByUserId(ownerId);
         }
         
-        [HttpGet("bank-account/owner/{ownerId}")]
-        [EnableQuery]
-        //[Authorize(Roles = "User, Owner, Admin")]
-        public IQueryable<BankAccountResponse> GetByOwnerIdForBill(Guid ownerId, [FromQuery] decimal amount, [FromQuery] string? description)
-        {
-            return _bankAccountService.GetBankAccountsWithAmount(ownerId, amount, description);
-        }
+        // [HttpGet("bank-account/owner/{ownerId}")]
+        // [EnableQuery]
+        // //[Authorize(Roles = "User, Owner, Admin")]
+        // public IQueryable<BankAccountResponse> GetByOwnerIdForBill(Guid ownerId, [FromQuery] decimal amount, [FromQuery] string? description)
+        // {
+        //     return _bankAccountService.GetBankAccountsWithAmount(ownerId, amount, description);
+        // }
         
        //  [HttpGet("owner/{ownerId}/bill/{billId}")]
        //  [EnableQuery]
@@ -136,5 +136,16 @@ namespace PaymentAPI.Controllers
        //  {
        //    return _bankAccountService.GetBankAccountsWithAmount(ownerId, billId, amount, description);
        //  }
+       
+       
+       // hàm mới thêm
+       
+       [HttpGet("bank-account/owner/{bankAccountId}")]
+       public async Task<IActionResult> GetByOwnerIdForBill(Guid bankAccountId, [FromQuery] decimal amount, [FromQuery] string description)
+       {
+           var result = await _bankAccountService.GetBankAccountQR(bankAccountId, amount, description);
+           return Ok(result);
+       }
+       
     }
 }

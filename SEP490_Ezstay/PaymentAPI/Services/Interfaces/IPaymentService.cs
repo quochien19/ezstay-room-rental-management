@@ -121,28 +121,9 @@ public interface IPaymentService
   
     Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByTenantIdAsync(Guid userId);
     Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByOwnerIdAsync(Guid ownerId);
-
-    /// <summary>
-    /// Lấy lịch sử thanh toán theo BillId
-    /// </summary>
-    // Task<ApiResponse<List<Payment>>> GetPaymentHistoryByBillIdAsync(Guid billId);
-    
-    /// <summary>
-    /// Lấy chi tiết một payment theo ID
-    /// </summary>
-    // Task<ApiResponse<Payment>> GetPaymentByIdAsync(Guid paymentId);
-    
-    /// <summary>
-    /// Check trạng thái thanh toán của bill
-    /// </summary>
     Task<ApiResponse<BillPaymentStatusResponse>> GetBillPaymentStatusAsync(Guid billId);
-
-  //  Task<ApiResponse<RevenueStatsResponse>> GetSystemRevenueStatsAsync();
-
-  //  Task<ApiResponse<RevenueStatsResponse>>  GetOwnerRevenueStatsAsync(Guid ownerId, int? year);
 }
 
-// Response DTO cho bill payment status
 public class BillPaymentStatusResponse
 {
     public Guid BillId { get; set; }

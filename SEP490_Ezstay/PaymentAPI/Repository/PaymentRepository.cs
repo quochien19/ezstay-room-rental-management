@@ -118,7 +118,7 @@ public class PaymentRepository : IPaymentRepository
         {
             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.TenantId)),
             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.OwnerId)),
-            new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.BillId)),
+         //   new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.BillId)),
             new CreateIndexModel<Payment>(indexKeys.Ascending(p => p.TransactionId))
         });
     }

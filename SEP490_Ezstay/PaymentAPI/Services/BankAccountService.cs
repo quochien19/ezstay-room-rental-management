@@ -140,4 +140,17 @@ public class BankAccountService:IBankAccountService
     // }
     
   
+    
+    public async Task<BankAccountResponse> GetBankAccountQR(Guid bankAccountId, decimal amount, string description)
+    {
+        var bankAccount=   await _bankAccountRepository.GetById(bankAccountId); 
+        var bankGateway = await _bankGatewayRepository.GetById(bankAccount.BankGatewayId);
+
+        return new BankAccountResponse
+        {
+            Amount = amount,
+            Description = description,
+            ImageQR = $"https://qr.sepay.vn/img?acc={bankAccount.AccountNumber}&bank={bankGateway.BankName}&amount={amount}&des={description}"
+        };
+    }
 }

@@ -21,5 +21,6 @@ public interface IBankAccountService
   //Task<JsonElement?> GetTransactionsAsync();
   
  // Task<List<BankAccountResponse>> GetBankAccountsWithAmount(Guid ownerId, Guid billId, decimal amount, string? description = null);
+ Task<BankAccountResponse> GetBankAccountQR(Guid bankAccountId, decimal amount, string description);
 
 }
