@@ -728,31 +728,74 @@ public class PaymentService : IPaymentService
 
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request)
     {
-        var billId = ExtractBillIdFromContent(request.Content);
-        var bill = await _utilityBillService.GetBillByIdAsync(billId);
+        try
+        {
+            // Validate request data
+            if (request == null)
+            {
+                _logger.LogError("❌ Webhook request is null");
+                return ApiResponse<bool>.Fail("Invalid request data");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Content))
+            {
+                _logger.LogError("❌ Webhook content is null or empty");
+                return ApiResponse<bool>.Fail("Content is required");
+            }
+
+            _logger.LogInformation($"🔔 Processing webhook - Content: {request.Content}, Amount: {request.TransferAmount}");
+
+            // Extract billId from content
+            var billId = ExtractBillIdFromContent(request.Content);
             
-        var payment = new Payment
-        {
-            BillId = billId,
-            TenantId =  bill.TenantId,
-            OwnerId =  bill.OwnerId,
-            TransactionId = request.TransactionId,
-            TransferAmount = request.TransferAmount,
-            Content = request.Content,
-            AccountNumber = request.AccountNumber,
-            Gateway = request.Gateway,
-            TransferType = request.TransferType,
-            TransactionDate = DateTime.UtcNow,
-        };
+            if (billId == Guid.Empty)
+            {
+                _logger.LogError($"❌ Cannot extract BillId from content: {request.Content}");
+                return ApiResponse<bool>.Fail("Invalid bill ID in content");
+            }
+
+            _logger.LogInformation($"📋 Extracted BillId: {billId}");
+
+            // Get bill information
+            var bill = await _utilityBillService.GetBillByIdAsync(billId);
+            
+            if (bill == null)
+            {
+                _logger.LogError($"❌ Bill not found: {billId}");
+                return ApiResponse<bool>.Fail($"Bill not found: {billId}");
+            }
+
+            _logger.LogInformation($"✅ Bill found - TenantId: {bill.TenantId}, OwnerId: {bill.OwnerId}");
+
+            // Create payment record
+            var payment = new Payment
+            {
+                BillId = billId,
+                TenantId = bill.TenantId,
+                OwnerId = bill.OwnerId,
+                TransactionId = request.TransactionId ?? request.IdNumber.ToString(),
+                TransferAmount = request.TransferAmount,
+                Content = request.Content,
+                AccountNumber = request.AccountNumber,
+                Gateway = request.Gateway ?? "SePay",
+                TransferType = request.TransferType ?? "transfer",
+                TransactionDate = DateTime.UtcNow,
+            };
       
-        await _paymentRepository.CreateAsync(payment);
+            await _paymentRepository.CreateAsync(payment);
+            _logger.LogInformation($"💾 Payment created successfully - PaymentId: {payment.Id}");
      
-        if (billId != Guid.Empty)
-        {
+            // Mark bill as paid
             await _utilityBillService.MarkBillAsPaidInternalAsync(billId);
+            _logger.LogInformation($"✅ Bill marked as paid: {billId}");
+            
+            return ApiResponse<bool>.Success(true, "Payment processed successfully");
         }
-        
-        return ApiResponse<bool>.Success(true, "Payment Successfully");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error processing webhook");
+            return ApiResponse<bool>.Fail($"Error processing payment: {ex.Message}");
+        }
     }
 
     public async Task<ApiResponse<List<PaymentResponse>>> GetPaymentHistoryByTenantIdAsync(Guid userId)
@@ -952,24 +995,42 @@ public class PaymentService : IPaymentService
     
     private Guid ExtractBillIdFromContent(string content)
     {
-        // 1. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
-        var normalizedContent = content
-            .Replace(" ", "") 
-            .Replace("-", "") 
-            .ToUpper();
-
-        // 2. TÌM KIẾM CHUỖI GUID 32 KÝ TỰ (Định dạng N - Numeric)
-        var guidPattern = @"[0-9A-F]{32}"; 
-    
-        var match = System.Text.RegularExpressions.Regex.Match(normalizedContent, guidPattern);
-        if (match.Success)
+        try
         {
-            var rawGuidString = match.Groups[0].Value;
-            if (Guid.TryParseExact(rawGuidString, "N", out var billId))
+            // Validate input
+            if (string.IsNullOrWhiteSpace(content))
             {
-                return billId;
+                _logger.LogWarning("Content is null or empty");
+                return Guid.Empty;
             }
+
+            // 1. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
+            var normalizedContent = content
+                .Replace(" ", "") 
+                .Replace("-", "") 
+                .ToUpper();
+
+            // 2. TÌM KIẾM CHUỖI GUID 32 KÝ TỰ (Định dạng N - Numeric)
+            var guidPattern = @"[0-9A-F]{32}"; 
+    
+            var match = System.Text.RegularExpressions.Regex.Match(normalizedContent, guidPattern);
+            if (match.Success)
+            {
+                var rawGuidString = match.Groups[0].Value;
+                if (Guid.TryParseExact(rawGuidString, "N", out var billId))
+                {
+                    _logger.LogInformation($"✅ Extracted BillId: {billId} from content: {content}");
+                    return billId;
+                }
+            }
+            
+            _logger.LogWarning($"⚠️ No valid GUID found in content: {content}");
+            return Guid.Empty;
         }
-        return Guid.Empty;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"❌ Error extracting BillId from content: {content}");
+            return Guid.Empty;
+        }
     }
 }
