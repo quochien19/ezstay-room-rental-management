@@ -116,6 +116,86 @@ public class PaymentService : IPaymentService
         }
     }
     
+      private Guid ExtractBillIdFromContent(string content)
+    {
+        try
+        {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                _logger.LogWarning("Content is null or empty");
+                return Guid.Empty;
+            }
+
+            _logger.LogInformation($"🔍 Extracting BillId from content: {content}");
+
+            // STRATEGY 1: Tìm GUID với dấu gạch ngang (format chuẩn)
+            // Pattern: 8-4-4-4-12 characters (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+            var guidWithHyphensPattern = @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+            var matchWithHyphens = System.Text.RegularExpressions.Regex.Match(content, guidWithHyphensPattern);
+            
+            if (matchWithHyphens.Success)
+            {
+                if (Guid.TryParse(matchWithHyphens.Value, out var billIdWithHyphens))
+                {
+                    _logger.LogInformation($"✅ Extracted BillId (with hyphens): {billIdWithHyphens}");
+                    return billIdWithHyphens;
+                }
+            }
+
+            // STRATEGY 2: Tìm GUID với dấu cách thay vì dấu gạch ngang
+            // Pattern: 8 4 4 4 12 (có thể có space hoặc không có gì)
+            // Example: "83acf6f6 4f3e 430a 9066 6351420f267c"
+            var guidWithSpacesPattern = @"([0-9a-fA-F]{8})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{4})\s+([0-9a-fA-F]{12})";
+            var matchWithSpaces = System.Text.RegularExpressions.Regex.Match(content, guidWithSpacesPattern);
+            
+            if (matchWithSpaces.Success)
+            {
+                var guidString = $"{matchWithSpaces.Groups[1].Value}-{matchWithSpaces.Groups[2].Value}-{matchWithSpaces.Groups[3].Value}-{matchWithSpaces.Groups[4].Value}-{matchWithSpaces.Groups[5].Value}";
+                
+                if (Guid.TryParse(guidString, out var billIdFromSpaces))
+                {
+                    _logger.LogInformation($"✅ Extracted BillId (from spaces): {billIdFromSpaces}");
+                    return billIdFromSpaces;
+                }
+            }
+
+            // STRATEGY 3: Tìm tất cả chuỗi 32 ký tự hex liên tiếp và validate
+            var normalizedContent = content.Replace(" ", "").Replace("-", "").ToUpper();
+            var guidPattern = @"[0-9A-F]{32}";
+            var matches = System.Text.RegularExpressions.Regex.Matches(normalizedContent, guidPattern);
+            
+            foreach (System.Text.RegularExpressions.Match match in matches)
+            {
+                var rawGuidString = match.Value;
+                if (Guid.TryParseExact(rawGuidString, "N", out var billId))
+                {
+                    // Validate: GUID không nên bắt đầu bằng số thuần túy (avoid phone numbers, transaction codes)
+                    var guidStr = billId.ToString();
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(guidStr, @"^[0-9]{8}-[0-9]{4}"))
+                    {
+                        _logger.LogInformation($"✅ Extracted BillId (32 chars): {billId}");
+                        return billId;
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"⚠️ Skipping invalid GUID (all numbers): {billId}");
+                    }
+                }
+            }
+            
+            _logger.LogWarning($"⚠️ No valid GUID found in content: {content}");
+            return Guid.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"❌ Error extracting BillId from content: {content}");
+            return Guid.Empty;
+        }
+    }
+}
+
+    
     
     // public async Task<ApiResponse<RevenueStatsResponse>> GetSystemRevenueStatsAsync()
     // {
@@ -199,44 +279,44 @@ public class PaymentService : IPaymentService
     // }
 
     
-    private Guid ExtractBillIdFromContent(string content)
-    {
-        try
-        {
-            // Validate input
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                _logger.LogWarning("Content is null or empty");
-                return Guid.Empty;
-            }
-
-            // 1. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
-            var normalizedContent = content
-                .Replace(" ", "") 
-                .Replace("-", "") 
-                .ToUpper();
-
-            // 2. TÌM KIẾM CHUỖI GUID 32 KÝ TỰ (Định dạng N - Numeric)
-            var guidPattern = @"[0-9A-F]{32}"; 
-    
-            var match = System.Text.RegularExpressions.Regex.Match(normalizedContent, guidPattern);
-            if (match.Success)
-            {
-                var rawGuidString = match.Groups[0].Value;
-                if (Guid.TryParseExact(rawGuidString, "N", out var billId))
-                {
-                    _logger.LogInformation($"✅ Extracted BillId: {billId} from content: {content}");
-                    return billId;
-                }
-            }
-            
-            _logger.LogWarning($"⚠️ No valid GUID found in content: {content}");
-            return Guid.Empty;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"❌ Error extracting BillId from content: {content}");
-            return Guid.Empty;
-        }
-    }
-}
+//     private Guid ExtractBillIdFromContent(string content)
+//     {
+//         try
+//         {
+//             // Validate input
+//             if (string.IsNullOrWhiteSpace(content))
+//             {
+//                 _logger.LogWarning("Content is null or empty");
+//                 return Guid.Empty;
+//             }
+//
+//             // 1. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
+//             var normalizedContent = content
+//                 .Replace(" ", "") 
+//                 .Replace("-", "") 
+//                 .ToUpper();
+//
+//             // 2. TÌM KIẾM CHUỖI GUID 32 KÝ TỰ (Định dạng N - Numeric)
+//             var guidPattern = @"[0-9A-F]{32}"; 
+//     
+//             var match = System.Text.RegularExpressions.Regex.Match(normalizedContent, guidPattern);
+//             if (match.Success)
+//             {
+//                 var rawGuidString = match.Groups[0].Value;
+//                 if (Guid.TryParseExact(rawGuidString, "N", out var billId))
+//                 {
+//                     _logger.LogInformation($"✅ Extracted BillId: {billId} from content: {content}");
+//                     return billId;
+//                 }
+//             }
+//             
+//             _logger.LogWarning($"⚠️ No valid GUID found in content: {content}");
+//             return Guid.Empty;
+//         }
+//         catch (Exception ex)
+//         {
+//             _logger.LogError(ex, $"❌ Error extracting BillId from content: {content}");
+//             return Guid.Empty;
+//         }
+//     }
+// }
