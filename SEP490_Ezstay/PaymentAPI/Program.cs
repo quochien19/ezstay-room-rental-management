@@ -39,8 +39,8 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // builder.Services.AddScoped<IPaymentHistoryRepository, PaymentHistoryRepository>();
 
-builder.Services.AddHttpClient<ISePayService, SePayService>();
-builder.Services.AddScoped<ISePayService, SePayService>();
+// builder.Services.AddHttpClient<ISePayService, SePayService>();
+// builder.Services.AddScoped<ISePayService, SePayService>();
 
 // Utility Bill Service (HTTP Client to UtilityBillAPI) - OPTIONAL
 // var utilityBillApiUrl = builder.Configuration["ServiceUrls:UtilityBillAPI"];/
