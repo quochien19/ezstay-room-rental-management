@@ -55,12 +55,6 @@ public class PaymentService : IPaymentService
             // Get bill information - PHẢI TÌM THẤY BILL MỚI XỬ LÝ TIẾP
             var bill = await _utilityBillService.GetBillByIdAsync(billId);
 
-            if (bill == null)
-            {
-                _logger.LogError($"❌ Bill not found: {billId}");
-                return ApiResponse<bool>.Fail($"Bill not found: {billId}");
-            }
-
             _logger.LogInformation(
                 $"✅ Bill found - BillId: {billId}, TenantId: {bill.TenantId}, OwnerId: {bill.OwnerId}");
 
