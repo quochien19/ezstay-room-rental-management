@@ -36,27 +36,27 @@ public class PaymentService : IPaymentService
 
     public async Task<ApiResponse<bool>> HandleSePayWebhookAsync(CreatePayment request)
     {
-        try
-        {
+       // try
+      //  {
             _logger.LogInformation(
                 $"🔔 Webhook received - Content: {request.Content}, Amount: {request.TransferAmount}, TransactionId: {request.TransactionId}");
 
             // Extract BillId from content (xử lý cả format có dấu - và không có dấu -)
             var billId = ExtractBillIdFromContent(request.Content);
 
-            if (billId == Guid.Empty)
-            {
-                _logger.LogError($"❌ Cannot extract BillId from content: {request.Content}");
-                return ApiResponse<bool>.Fail("Cannot extract BillId from payment content");
-            }
+            // if (billId == Guid.Empty)
+            // {
+            //     _logger.LogError($"❌ Cannot extract BillId from content: {request.Content}");
+            //     return ApiResponse<bool>.Fail("Cannot extract BillId from payment content");
+            // }
 
             _logger.LogInformation($"📋 BillId extracted: {billId}");
 
             // Get bill information - PHẢI TÌM THẤY BILL MỚI XỬ LÝ TIẾP
             var bill = await _utilityBillService.GetBillByIdAsync(billId);
 
-            _logger.LogInformation(
-                $"✅ Bill found - BillId: {billId}, TenantId: {bill.TenantId}, OwnerId: {bill.OwnerId}");
+            // _logger.LogInformation(
+            //     $"✅ Bill found - BillId: {billId}, TenantId: {bill.TenantId}, OwnerId: {bill.OwnerId}");
 
             // LƯU PAYMENT CHỈ KHI TÌM THẤY BILL
             var payment = new Payment
@@ -74,20 +74,20 @@ public class PaymentService : IPaymentService
             };
 
             await _paymentRepository.CreateAsync(payment);
-            _logger.LogInformation(
-                $"💾 Payment saved - PaymentId: {payment.Id}, BillId: {billId}, Amount: {request.TransferAmount}");
+            // _logger.LogInformation(
+            //     $"💾 Payment saved - PaymentId: {payment.Id}, BillId: {billId}, Amount: {request.TransferAmount}");
 
             // Mark bill as paid
             await _utilityBillService.MarkBillAsPaidInternalAsync(billId);
-            _logger.LogInformation($"✅ Bill marked as paid: {billId}");
+          //  _logger.LogInformation($"✅ Bill marked as paid: {billId}");
 
             return ApiResponse<bool>.Success(true, "Payment processed and bill marked as paid successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Error processing webhook");
-            return ApiResponse<bool>.Fail($"Error: {ex.Message}");
-        }
+        // }
+        // catch (Exception ex)
+        // {
+        //     _logger.LogError(ex, "❌ Error processing webhook");
+        //     return ApiResponse<bool>.Fail($"Error: {ex.Message}");
+        // }
     }
 
 
