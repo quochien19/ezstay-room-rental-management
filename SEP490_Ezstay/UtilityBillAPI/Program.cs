@@ -121,6 +121,32 @@ namespace UtilityBillAPI
                     }
                 });
             });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.SetIsOriginAllowed(origin => true) // Allow all origins for API
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+    
+    // Alternative: Specific origins policy
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "https://ezstay-fe-project.vercel.app",
+                "https://ezstay-fe.vercel.app",
+                "https://payment-api-r4zy.onrender.com",
+                https://bill-half.onrender.com
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
             var app = builder.Build();
 
