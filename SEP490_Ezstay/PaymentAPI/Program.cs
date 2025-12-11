@@ -170,7 +170,10 @@ builder.Services.AddCors(options =>
                 "https://localhost:3000",
                 "https://ezstay-fe-project.vercel.app",
                 "https://ezstay-fe.vercel.app",
-                "https://payment-api-r4zy.onrender.com"
+                "https://payment-api-r4zy.onrender.com",
+                            https://bill-half.onrender.com
+
+        
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
