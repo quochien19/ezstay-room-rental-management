@@ -141,7 +141,7 @@ builder.Services.AddCors(options =>
                 "https://ezstay-fe.vercel.app",
                 "https://payment-api-r4zy.onrender.com",
                 https://bill-half.onrender.com,
-             https://bill-half.onrender.com
+    
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
